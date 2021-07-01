@@ -115,8 +115,16 @@ function draw(){
   .enter().append("g")
     .attr("class", "bar")
     .attr("transform", function(d, i) { return "translate("+margin.left+"," + yScale(d.activity) + ")"; });
+   
+  bar.append("rect")
+    .attr("class","bg-rect")
+    .attr("height",yScale.bandwidth())
+    .attr("width",width)
+    .attr("fill","lightgray")
+    .attr("opacity",0.3)
 
   bar.append("rect")
+    .attr("class","bar-rect")
     .attr("height", yScale.bandwidth())
     .attr("width", d=>xScale(d.count));
 
@@ -125,16 +133,38 @@ function draw(){
     .attr("x", function(d) { return xScale(d.count) - 6; })
     .attr("y", yScale.bandwidth() / 2)
     .attr("dy", ".35em")
-    .text(function(d, i) { return i; });
+    .attr("fill","white")
+    .text(function(d, i) { return d.count; })
+  
 
-  d3.select("#sortbutton").on("click",function(){
-    state.filteredData = state.data.sort(function(a,b){return b.count-a.count;})
+  d3.selectAll(".sortbutton").on("click",function(){
+
+    if (this.id === "descending"){
+      state.filteredData = state.data.sort(function(a,b){return b.count-a.count;})
+    }
+    else {
+      state.filteredData = state.data.sort(function(a,b){return a.count-b.count;})
+
+    }
+    
     yScale.domain(state.filteredData.map(d=>d.activity));
+
+    svg.select('.axis')
+            .transition()
+                    .duration(750)
+            .call(yAxis);
+
     bar.transition()
         .duration(750)
         .delay(function(d, i) { return i * 50; })
         .attr("transform", function(d, i) { return "translate("+margin.left+"," + yScale(d.activity) + ")"; });
 
+        
+    /*svg
+        .append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(${margin.left}, 0)`)
+        .call(yAxis);*/
   })
 
   svg
