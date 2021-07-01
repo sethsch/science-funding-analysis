@@ -1,0 +1,1 @@
+Analysis of Web of Science publications for a selection of large private funders, studying the funding dynamics.
