@@ -11,18 +11,85 @@
   </head>
   <body>
     <header>
-      <h1>Tutorial 2</h1>
-      <h2>Quantities and Amounts</h2>
+      <h1>Science Funders</h1>
+      <h2>Research Areas and Funder Networks</h2>
     </header>
 
-    <!-- all we need is an element to select -->
+    <!-- all we need is an element to select 
     <button type="button" id="descending" class="sortbutton">Sort Descending</button>
     <button type="button" id="ascending" class="sortbutton">Sort Ascending</button>
-    <div id="d3-container"> </div>
+  
+      <div id="d3-container"> </div>
+     <div id="panel-area"></div>
+    -->
+    <div id="wrapper">
+      <div id="area-funder-table">
+        <table>
+  
+            <thead> 
+              <tr>
+                <th></th>
+                <td>Mellon</td>
+                <td>Packard</td>
+                <td>Gates</td>
+                <td>OSF</td>
+                <td>RWJ</td>
+                <td>Hewlett</td>
+                <td>Ford</td>
+              </tr>
+            </thead>
+         
+          <tbody>
+          </tbody>
+  
+        </table>
+  
+  
+      </div>
+      <div id="network-graph"></div>
+    </div>
+
+
+    <div id="table-container">
+      <div class="subject-title"></div>
+      <div class="row">
+        <div class="column left" id="summary">Col Left
+        </div>
+
+        <div class="column right">
+          <div id="boxplot"></div>
+        </div>
+      </div>
+
+    </div>
+
+    
+
+
+    
 
     <!-- this is the line that loads in d3 -->
     <script src="lib/d3/dist/d3.min.js"></script>
+    <script src="network.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-format@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-time@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-time-format@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-scale@4"></script>
+    
+    <script src="https://unpkg.com/d3-collection@1"></script>
+    <script src="https://unpkg.com/d3-path@1"></script>
+    <script src="https://unpkg.com/d3-shape@1"></script>
+    <script src="https://unpkg.com/d3-sankey@0"></script>
+
+
     <!-- this is the line that loads in the main js script -->
-    <script src="./main.js"></script>
+    <script src="./main.js" type="module"></script>
+  
+
+   
   </body>
 </html>

@@ -5,10 +5,128 @@ body {
 }
 
 .label {
-  fill: white;
+  
   text-anchor: middle;
 }
 
+
+
+#table-container{
+  width: 100%;
+}
+
+.column {
+  float: left;
+}
+
+.left {
+  width: 60%;
+  height: 25vh;
+  background-color: lightblue;
+}
+
+.right {
+  width: 40%;
+  height: 25vh;
+  background-color: lightgray;
+}
+
+
+
 .axis {
   font-size: 16px;
+}
+
+.panel{
+  margin: 0;
+  padding: 0;
+}
+
+#wrapper{
+  width: 100%;
+  display: flex;
+  margin: 2%;
+
+
+}
+
+#area-funder-table{
+  width: 55vw;
+  height: 75vh;
+  overflow-y: scroll;
+  float: left
+}
+#network-graph{
+  width: 45vw;
+  height: 50vh;
+  padding: 1%;
+}
+
+
+
+table {
+  border-collapse: collapse;
+  font: 10px sans-serif;
+  width: 720px;
+}
+
+th {
+  font-weight: normal;
+  text-align: left;
+  padding-right: 6px;
+  min-width: 43px;
+
+  
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  margin-bottom: 15px;
+  background-color: white;
+}
+
+
+
+thead td {
+  cursor: s-resize;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+
+
+.subj-col {
+  word-break: break-word;
+}
+
+
+tbody tr:first-child td {
+  padding-top: 2px;
+}
+tbody tr{
+  border-bottom: solid 1px lightgray;
+}
+tbody td {
+  padding: 0rem;
+  border: solid 0.5rem white;
+  background-color: rgb(243, 243, 243);
+}
+
+.perc-text{
+  fill: rgb(95, 95, 95);
+  font: 10px sans-serif;
+}
+
+tbody rect {
+  fill: steelblue;
+}
+
+tbody tr:hover rect {
+  fill: brown;
+}
+
+.axis text{
+  font-size: 0.8em;
 }

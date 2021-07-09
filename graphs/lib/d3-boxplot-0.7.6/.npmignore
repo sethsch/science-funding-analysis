@@ -1,0 +1,11 @@
+.DS_Store
+
+.idea/
+.editorconfig
+.eslintrc.json
+
+build/*.zip
+test/
+img/
+
+demo.*
