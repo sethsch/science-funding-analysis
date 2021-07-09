@@ -129,163 +129,6 @@ function toTitleCase(string = '') {
   return string;
 }
 
-function drag(simulation) {
-  
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-  }
-  
-  function dragged(event) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-  }
-  
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
-  }
-  
-  return d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
-}
-state.network = graph;
-//console.log("global state",state);
-
-
-
-const links = state.network.links.map(d => Object.create(d));
-const nodes = state.network.nodes.map(d => Object.create(d));
-const radius = 5;
-const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(netWidth / 2, netHeight / 2));
-
-const svg = d3.select("#network-graph").append("svg")
-    .attr("width",netWidth)
-    .attr("height",netHeight)
-
-const link = svg.append("g")
-    .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.6)
-  .selectAll("line")
-  .data(links)
-  .join("line")
-    .attr("stroke-width", d => Math.sqrt(d.value))
-    .attr("class","link-line")
-    .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
-
-const node = svg.append("g")
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 1.5)
-  .selectAll("circle")
-  .data(nodes)
-  .join("circle")
-    .attr("r", radius)
-    .attr("id",d=>d.index)
-    .attr("fill", d=>colorScale(d.group))
-    .call(drag(simulation));
-
-const texts = svg.selectAll("text.label")
-    .data(nodes)
-    .enter().append("text")
-    .attr("class", "label")
-    .attr("id",d=>d.index)
-    .attr("fill", "black")
-    .attr("font-size","0px")
-    .text(function(d) {  return d.id;  });
-
-//node.append("title")
-//    .text(d => d.id);
-
-// maintain a list of active links for hover behavior
-var link_dests = [];
-
-node.on("mouseenter",function(){
-  d3.select(this)
-    .transition()
-    .duration(500)
-    .attr("r",radius*2)
-
-  var node_id = d3.select(this).attr("id")
-  //console.log("node id",node_id)
-
-  d3.selectAll(".link-line")
-    .attr("stroke",function(e){
-      //console.log("e",e)
-      if(String(e.source.index) === String(node_id) ||String(e.target.index) === String(node_id) ){
-        link_dests.push(String(e.source.index))
-        link_dests.push(String(e.target.index))
-
-        return "black";
-      }
-      else{return "#999";}
-      //console.log("link console log",e.source,e.target)
-    })
-    //.attr("stroke","blue")
-
-  d3.selectAll(".label")
-    .transition()
-    .duration(800)
-    .delay(400)
-    .attr("font-size",function(e){
-      //console.log(e,'linkdest',link_dests)
-      if(String(e.index) === String(node_id) ){
-        return "14px";
-      }
-      else if (link_dests.includes(String(e.index))){
-        return "10px";
-      }
-      else{return "0px";}
-    })
-    .attr("transform",function(d){
-      //console.log(e,'linkdest',link_dests)
-      if(String(e.index) === String(node_id) ){
-        return "translate(" + (d.x + 5) + "," + (d.y + 10) + ")";
-      }
-    })
-})
-
-node.on("mouseout",function(){
-  // clear active link list
-  link_dests = [];      
-  d3.select(this)
-    .transition()
-    .duration(250)
-    .attr("r",radius)
-
-  d3.selectAll(".link-line")
-    .attr("stroke","#999")
-
-  d3.selectAll(".label")
-    .attr("font-size","0px")
-    .attr("transform", function(d) {
-      return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
-  })
-
-})
-
-simulation.on("tick", () => {
-  link
-      .attr("x1", d => d.source.x)
-      .attr("y1", d => d.source.y)
-      .attr("x2", d => d.target.x)
-      .attr("y2", d => d.target.y);
-
-  node
-    .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(netWidth - radius, d.x)); })
-    .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(netHeight - radius, d.y)); });
-
-  texts
-  .attr("transform", function(d) {
-      return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
-  });
-});
 
 //invalidation.then(() => simulation.stop());
 
@@ -476,8 +319,235 @@ oa_svg.append("g")
     .text(d => oa_formatPercent(d.value)));
 
   
+   
+
+    function drag(simulation) {
+  
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      }
+      
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      }
+      
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
+      }
+      
+      return d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended);
+    }
+    state.network = graph;
+    //console.log("global state",state);
+    
+    
 
 
+
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+    var nodes = []
+    var node_vals = []
+    for (let i = 0; i < osf['nodes'].length; i++){
+      let val = osf['top_cofunders'].filter(d=>d.funder === osf['nodes'][i])
+      
+      let a = {"id":osf['nodes'][i], "group": 0, "value": val[0].value}
+      nodes.push(a)
+      
+    }
+    console.log("console logging...","node vals",node_vals,nodes)
+    
+    nodes = nodes.map(d => Object.create(d));
+    const links = osf['links'].map(d=>Object.create(d))
+
+ 
+
+
+
+
+    const circScale = d3.scaleSqrt()
+    .domain([1, d3.max(nodes,d=>d.value)])
+    .range([6, 20]);
+
+    //const links = state.network.links.map(d => Object.create(d));
+    //const nodes = state.network.nodes.map(d => Object.create(d));
+    const radius = 5;
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id))
+        .force("charge", d3.forceManyBody().strength(-100))
+        .force("center", d3.forceCenter(netWidth / 2, netHeight / 2));
+    
+    const net_svg = d3.select("#network-graph").append("svg")
+        .attr("width",netWidth)
+        .attr("height",netHeight)
+    
+    const link = net_svg.append("g")
+        .attr("stroke", "#999")
+        .attr("stroke-opacity", 0.6)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+        .attr("stroke-width", d => Math.sqrt(d.value))
+        .attr("class","link-line")
+        .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
+    
+
+//// TRIAL ****************
+
+      //Toggle stores whether the highlighting is on
+      var toggle = 0;
+      //Create an array logging what is connected to what
+      var linkedByIndex = {};
+      for (let i = 0; i < nodes.length; i++) {
+          linkedByIndex[i + "," + i] = 1;
+      };
+      links.forEach(function (d) {
+          linkedByIndex[d.source.index + "," + d.target.index] = 1;
+      });
+      //This function looks up whether a pair are neighbours
+      function neighboring(a, b) {
+          return linkedByIndex[a.index + "," + b.index];
+      }
+      function connectedNodes() {
+          if (toggle == 0) {
+              //Reduce the opacity of all but the neighbouring nodes
+              let d = d3.select(this).node().__data__;
+              console.log("this is what the d on click is in connected nodes",d)
+              //.node().__data__;
+              node.style("opacity", function (o) {
+                  return neighboring(d, o) | neighboring(o, d) ? 1 : 0.1;
+              });
+              link.style("opacity", function (o) {
+                  return d.index==o.source.index | d.index==o.target.index ? 1 : 0.1;
+              });
+              //Reduce the op
+              toggle = 1;
+          } else {
+              //Put them back to opacity=1
+              node.style("opacity", 1);
+              link.style("opacity", 1);
+              toggle = 0;
+          }
+      }
+      //and add one line to the node set up
+
+    const node = net_svg.append("g")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1.5)
+      .selectAll("circle")
+      .data(nodes)
+      .join("circle")
+        .attr("r", d=>circScale(d.value))
+        .attr("id",d=>d.index)
+        .attr("fill", d=>colorScale(d.group))
+        .call(drag(simulation))
+        .on('dblclick', connectedNodes); //Added code 
+    
+    const texts = net_svg.selectAll("text.label")
+        .data(nodes)
+        .enter().append("text")
+        .attr("class", "label")
+        .attr("id",d=>d.index)
+        .attr("fill", "black")
+        .attr("font-size","0px")
+        .text(function(d) {  return d.id;  });
+    
+    //node.append("title")
+    //    .text(d => d.id);
+    
+    // maintain a list of active links for hover behavior
+    var link_dests = [];
+    
+    node.on("mouseenter",function(){
+      d3.select(this)
+        .transition()
+        .duration(500)
+        .attr("r",d=>circScale(d.value)*1.5)
+    
+      var node_id = d3.select(this).attr("id")
+      //console.log("node id",node_id)
+    
+      d3.selectAll(".link-line")
+        .attr("stroke",function(e){
+          //console.log("e",e)
+          if(String(e.source.index) === String(node_id) ||String(e.target.index) === String(node_id) ){
+            link_dests.push(String(e.source.index))
+            link_dests.push(String(e.target.index))
+    
+            return "black";
+          }
+          else{return "#999";}
+          //console.log("link console log",e.source,e.target)
+        })
+        //.attr("stroke","blue")
+    
+      d3.selectAll(".label")
+        .transition()
+        .duration(800)
+        .delay(400)
+        .attr("font-size",function(e){
+          //console.log(e,'linkdest',link_dests)
+          if(String(e.index) === String(node_id) ){
+            return "14px";
+          }
+          else if (link_dests.includes(String(e.index))){
+            return "0px";
+          }
+          else{return "0px";}
+        })
+        .attr("transform",function(d){
+          //console.log(e,'linkdest',link_dests)
+          if(String(d.index) === String(node_id) ){
+            return "translate(" + (d.x + 5) + "," + (d.y + 10) + ")";
+          }
+        })
+    })
+    
+    node.on("mouseout",function(){
+      // clear active link list
+      link_dests = [];      
+      d3.select(this)
+        .transition()
+        .duration(250)
+        .attr("r",d=>circScale(d.value))
+    
+      d3.selectAll(".link-line")
+        .attr("stroke","#999")
+    
+      d3.selectAll(".label")
+        .attr("font-size","0px")
+        .attr("transform", function(d) {
+          return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
+      })
+    
+    })
+    
+    simulation.on("tick", () => {
+      link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+    
+      node
+        .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(netWidth - radius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(netHeight - radius, d.y)); });
+    
+      texts
+      .attr("transform", function(d) {
+          return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
+      });
+    });
+    
  
 
 })
