@@ -117,6 +117,18 @@ d3.csv("/data/researchAreas_funder_associations.csv",d3.autoType).then(data=> {
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
 
+function toTitleCase(string = '') {
+  const regex = /^[a-z]{0,1}|\s\w/gi;
+
+  string = string.toLowerCase();
+
+  string.match(regex).forEach((char) => {
+    string = string.replace(char, char.toUpperCase());
+  });
+
+  return string;
+}
+
 function drag(simulation) {
   
   function dragstarted(event) {
@@ -293,63 +305,177 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
   const osf = data['osf']['Research Areas']['Government & Law']
   const citations = osf['citation_stats'][9].value
   const plotWidth = 500;
-  const margin = {left: 20, right: 20}
-  const plotHeight = 250;
+  const margin = {left: 20, right: 20, top: 20, bottom: 20}
+  const plotHeight = 100;
   const bandwidth = 40;
   
 
+  d3.select("#subject-title").text("Government & Law - " +
+                                  osf['num_pubs']+" publications, "+
+                                  d3.format(".0%")(osf['pct_of_all'])
+                                   )
     
 
-  let summary = d3.select("#summary")
-    .append("g")
+  let kw = d3.select("#summary")
+    .append("p")
 
+  function makeParagraph(kw,attr_name,list_len,values=false){
+    var p = "";
+    
+    for (let i = 0; i < list_len; i++){
+      if (i !== list_len-1){
+        if (values != false) {
+          p = p+kw[i][attr_name]+" ("+kw[i].value+"), "
+        }
+        else { p = p+kw[i][attr_name]+", "}
+
+      }
+      else {
+        if (values != false) {
+          p = p+kw[i][attr_name]+" ("+kw[i].value+")"
+        }
+        else {p = p+ kw[i][attr_name]}
+      }
+    }
+    return p;
+
+  }
+  kw.text(makeParagraph(osf['top_25_kw'],"keyword",25,false));
+
+  let cofunders = d3.select("#summary")
+    .append("p")
+
+  cofunders.text(makeParagraph(osf['top_cofunders'],"funder",10,true))
+
+ 
+  let journals = d3.select("#summary")
+    .append("p")
+
+  journals.text(toTitleCase(makeParagraph(osf['journals_20'],'journal',10,true)))
+  
+
+  let authors = d3.select("#summary")
+    .append("p")
+
+  authors.text(makeParagraph(osf['authors_top25'],'author',15,true))
    
     
-    
-  summary.data(osf["top_25_kw"])
-    .enter()
-    .append("text")
-    .attr("class","kw-text")
-    //.attr("y",(d,i)=>10+i*20)
-    .text(d=>d.keyword+" ("+String(d.value)+")")
-
+  
 
 
 
  
 
-  console.log("did we get osf?",osf)
+console.log("did we get osf?",osf)
 
-  let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("height",plotHeight)
+let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("height",plotHeight)
 
-  let stats = boxplotStats(citations)
+let stats = boxplotStats(citations)
 
-  console.log("stats",stats)
+console.log("stats",stats)
 
-  let x = d3.scaleLinear()
-    .domain(d3.extent(citations))
-    .range([margin.left, plotWidth-margin.right*2])
+let x = d3.scaleLinear()
+  .domain(d3.extent(citations))
+  .range([margin.left, plotWidth-margin.right*2])
 
-  let plot = boxplot()
-    .scale(x)
-    .showInnerDots(false)
-    .opacity(0.8)
-    .bandwidth(bandwidth)
-    .boxwidth(8)
+let plot = boxplot()
+  .scale(x)
+  .showInnerDots(false)
+  .opacity(0.8)
+  .bandwidth(bandwidth)
+  .boxwidth(8)
 
-  svg.append("g").attr('transform',`translate(${margin.left}, 0)`).datum(stats).call(plot)
+svg.append("g").attr('transform',`translate(${margin.left}, 0)`).datum(stats).call(plot)
 
-  svg.append('g')
-  .attr('class', 'axis')
-  .attr('transform', `translate(${margin.left}, ${bandwidth-10})`)
-  .attr('color', '#888')
-  .call(d3.axisBottom()
-          .scale(x)
-          .ticks(4)
-          .tickValues(stats.fiveNums.slice(1,5)) 
-        )
+svg.append('g')
+.attr('class', 'axis')
+.attr('transform', `translate(${margin.left}, ${bandwidth-10})`)
+.attr('color', '#888')
+.call(d3.axisBottom()
+        .scale(x)
+        .ticks(4)
+        .tickValues(stats.fiveNums.slice(1,5)) 
+      )
 
-  d3.selectAll(".point").attr("r",3)
+d3.selectAll(".point").attr("r",3)
+
+let citation_info = d3.select("#citation-stats").append("p")
+
+let citation_infoText = "<ul><li>% of Publications w. 0 citations to date: "+
+                                  d3.format(".0%")(osf["citation_stats"][1].value) + "</li>" +
+                        "<li>Top 25%: " + osf["citation_stats"][4].value + "+ citations </li>" +
+                        "<li>Top 10%: " + String(parseInt(osf["citation_stats"][6].value)) + "+ citations</li></ul>"
+
+
+
+citation_info.html(citation_infoText);
+
+let oa_plotHeight = 33;
+
+let oa_svg = d3.select("#oa-stats")
+.append("svg")
+.attr("width",plotWidth)
+.attr("height",oa_plotHeight)
+.style("display", "block");
+
+
+let oa = [osf["oa_summary"][2],osf["oa_summary"][0],osf["oa_summary"][3],osf["oa_summary"][1]]
+
+let oa_xScale = d3.scaleLinear([0, 1], [margin.left, plotWidth - margin.right])
+let oa_color = d3.scaleOrdinal()
+    .domain(oa.map(d => d.oa_type))
+    .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), oa.length))
+
+let oa_formatPercent = x.tickFormat(null, "%")
+
+function stack(data,name_col){
+  const total = d3.sum(data, d => d.value);
+  let value = 0;
+  return data.map(d => ({
+    name: d[name_col],
+    value: d.value / total,
+    startValue: value / total,
+    endValue: (value += d.value) / total
+  }));
+}
+
+// reorder oa summary var into right order
+let oa_stack = stack(oa,"oa_type");
+console.log("stack",oa_stack);
+
+oa_svg.append("g")
+  .attr("stroke", "white")
+  .selectAll("rect")
+  .data(oa_stack)
+  .join("rect")
+  .attr("fill", d => oa_color(d.name))
+  .attr("x", d => oa_xScale(d.startValue))
+  .attr("y", 2)
+  .attr("width", d => oa_xScale(d.endValue) - x(d.startValue))
+  .attr("height", oa_plotHeight )
+  .append("title")
+  .text(d => `${d.name}
+  ${oa_formatPercent(d.value)}`);
+
+oa_svg.append("g")
+.attr("font-family", "sans-serif")
+.attr("font-size", 10)
+.selectAll("text")
+.data(oa_stack.filter(d => oa_xScale(d.endValue) - oa_xScale(d.startValue) > 40))
+.join("text")
+.attr("fill", d => d3.lab(oa_color(d.name)).l < 50 ? "white" : "black")
+.attr("transform", d => `translate(${oa_xScale(d.startValue) + 6}, 6)`)
+.call(text => text.append("tspan")
+    .attr("y", "0.7em")
+    .attr("font-weight", "bold")
+    .text(d => d.name))
+.call(text => text.append("tspan")
+    .attr("x", 0)
+    .attr("y", "1.7em")
+    .attr("fill-opacity", 0.7)
+    .text(d => oa_formatPercent(d.value)));
+
+  
 
 
  

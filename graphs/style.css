@@ -5,7 +5,6 @@ body {
 }
 
 .label {
-  
   text-anchor: middle;
 }
 
@@ -21,13 +20,11 @@ body {
 
 .left {
   width: 60%;
-  height: 25vh;
   background-color: lightblue;
 }
 
 .right {
   width: 40%;
-  height: 25vh;
   background-color: lightgray;
 }
 
