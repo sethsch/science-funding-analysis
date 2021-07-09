@@ -360,7 +360,7 @@ oa_svg.append("g")
     for (let i = 0; i < osf['nodes'].length; i++){
       let val = osf['top_cofunders'].filter(d=>d.funder === osf['nodes'][i])
       
-      let a = {"id":osf['nodes'][i], "group": 0, "value": val[0].value}
+      let a = {"id":osf['nodes'][i], "group": getRandomInt(8), "value": val[0].value}
       nodes.push(a)
       
     }
@@ -401,7 +401,6 @@ oa_svg.append("g")
         .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
     
 
-//// TRIAL ****************
 
       //Toggle stores whether the highlighting is on
       var toggle = 0;
@@ -452,6 +451,7 @@ oa_svg.append("g")
         .call(drag(simulation))
         .on('dblclick', connectedNodes); //Added code 
     
+        
     const texts = net_svg.selectAll("text.label")
         .data(nodes)
         .enter().append("text")
@@ -460,6 +460,7 @@ oa_svg.append("g")
         .attr("fill", "black")
         .attr("font-size","0px")
         .text(function(d) {  return d.id;  });
+
     
     //node.append("title")
     //    .text(d => d.id);
@@ -497,19 +498,20 @@ oa_svg.append("g")
         .attr("font-size",function(e){
           //console.log(e,'linkdest',link_dests)
           if(String(e.index) === String(node_id) ){
-            return "14px";
+            return "0.8em";
           }
           else if (link_dests.includes(String(e.index))){
-            return "0px";
+            return "0em";
           }
           else{return "0px";}
         })
         .attr("transform",function(d){
           //console.log(e,'linkdest',link_dests)
           if(String(d.index) === String(node_id) ){
-            return "translate(" + (d.x + 5) + "," + (d.y + 10) + ")";
+            return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
           }
         })
+
     })
     
     node.on("mouseout",function(){
@@ -526,7 +528,7 @@ oa_svg.append("g")
       d3.selectAll(".label")
         .attr("font-size","0px")
         .attr("transform", function(d) {
-          return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
+          return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
       })
     
     })
@@ -544,7 +546,7 @@ oa_svg.append("g")
     
       texts
       .attr("transform", function(d) {
-          return "translate(" + (d.x - 5) + "," + (d.y - 10) + ")";
+          return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
       });
     });
     
