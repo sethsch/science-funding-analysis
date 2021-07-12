@@ -114,7 +114,7 @@ d3.csv("/data/researchAreas_funder_associations.csv",d3.autoType).then(data=> {
 
 })
 
-const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+const colorScale = d3.scaleOrdinal(d3.schemePaired);
 
 
 function toTitleCase(string = '') {
@@ -145,7 +145,7 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
 
 
 
-  const osf = data['osf']['Research Areas']['Government & Law']
+  const osf = data['osf']['Research Areas']['Computer Science']
   const citations = osf['citation_stats'][9].value
   const plotWidth = 500;
   const margin = {left: 20, right: 20, top: 20, bottom: 20}
@@ -153,7 +153,7 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
   const bandwidth = 40;
   
 
-  d3.select("#subject-title").text("Government & Law - " +
+  d3.select("#subject-title").text("Business & Economics - " +
                                   osf['num_pubs']+" publications, "+
                                   d3.format(".0%")(osf['pct_of_all'])
                                    )
@@ -261,8 +261,10 @@ let oa_svg = d3.select("#oa-stats")
 .attr("height",oa_plotHeight)
 .style("display", "block");
 
-
-let oa = [osf["oa_summary"][2],osf["oa_summary"][0],osf["oa_summary"][3],osf["oa_summary"][1]]
+console.log(osf,"at oa sumary break")
+// TO DO: re-arrange based on keys rather htan index to make no-oa first or last...
+let oa = osf["oa_summary"]
+//let oa = [osf["oa_summary"][2],osf["oa_summary"][0],osf["oa_summary"][3],osf["oa_summary"][1]]
 
 let oa_xScale = d3.scaleLinear([0, 1], [margin.left, plotWidth - margin.right])
 let oa_color = d3.scaleOrdinal()
@@ -355,21 +357,21 @@ oa_svg.append("g")
     function getRandomInt(max) {
       return Math.floor(Math.random() * max);
     }
-    var nodes = []
-    var node_vals = []
+    //var nodes = []
+    var nodes = osf['nodes']
+    /*var node_vals = []
     for (let i = 0; i < osf['nodes'].length; i++){
       let val = osf['top_cofunders'].filter(d=>d.funder === osf['nodes'][i])
       
       let a = {"id":osf['nodes'][i], "group": getRandomInt(8), "value": val[0].value}
       nodes.push(a)
       
-    }
-    console.log("console logging...","node vals",node_vals,nodes)
+    }*/
+    console.log("console logging...","node vals",nodes)
     
     nodes = nodes.map(d => Object.create(d));
     const links = osf['links'].map(d=>Object.create(d))
 
- 
 
 
 
@@ -389,6 +391,7 @@ oa_svg.append("g")
     const net_svg = d3.select("#network-graph").append("svg")
         .attr("width",netWidth)
         .attr("height",netHeight)
+        .attr("id","network-svg")
     
     const link = net_svg.append("g")
         .attr("stroke", "#999")
@@ -439,6 +442,9 @@ oa_svg.append("g")
       }
       //and add one line to the node set up
 
+    const info_box = d3.select("#community-info")
+
+
     const node = net_svg.append("g")
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
@@ -447,19 +453,29 @@ oa_svg.append("g")
       .join("circle")
         .attr("r", d=>circScale(d.value))
         .attr("id",d=>d.index)
+        .attr("name",d=>d.id)
+        .attr("group",d=>d.group)
         .attr("fill", d=>colorScale(d.group))
         .call(drag(simulation))
         .on('dblclick', connectedNodes); //Added code 
     
         
     const texts = net_svg.selectAll("text.label")
+        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
         .data(nodes)
         .enter().append("text")
         .attr("class", "label")
         .attr("id",d=>d.index)
+        .attr("group",d=>d.group)
         .attr("fill", "black")
-        .attr("font-size","0px")
-        .text(function(d) {  return d.id;  });
+        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
+        .attr("font-size",function(d){
+          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+            return "0.8em";
+          }
+          else {return "0px";}
+        })
+        .text(function(d) {  return d.id  });
 
     
     //node.append("title")
@@ -475,7 +491,8 @@ oa_svg.append("g")
         .attr("r",d=>circScale(d.value)*1.5)
     
       var node_id = d3.select(this).attr("id")
-      //console.log("node id",node_id)
+      var node_name = d3.select(this).attr("name")
+      console.log("node id",this)
     
       d3.selectAll(".link-line")
         .attr("stroke",function(e){
@@ -493,24 +510,40 @@ oa_svg.append("g")
     
       d3.selectAll(".label")
         .transition()
-        .duration(800)
-        .delay(400)
+        //.duration(800)
+        //.delay()
         .attr("font-size",function(e){
+          console.log("the nodename on mouse enter",e.id)
           //console.log(e,'linkdest',link_dests)
           if(String(e.index) === String(node_id) ){
             return "0.8em";
           }
-          else if (link_dests.includes(String(e.index))){
-            return "0em";
+          else if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
+            return "0.8em";
           }
           else{return "0px";}
         })
         .attr("transform",function(d){
           //console.log(e,'linkdest',link_dests)
-          if(String(d.index) === String(node_id) ){
+          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
             return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
           }
-        })
+          else if (String(d.index) === String(node_id) ){
+            // let's keep the text in a constant position to make it UI friendly...
+            return "translate("+netWidth/2+",15)"
+          }
+
+            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+
+            /* let's try an alternative, tracking to mouse
+            else {
+              //console.log(d3.pointer(event))
+              var x = d3.pointer(event)[0] //- document.getElementById("#network-svg").getBoundingClientRect().x + 10
+              var y = d3.pointer(event)[1] //- document.getElementById("#network-svg").getBoundingClientRect().y + 10
+              return "translate(" + String(x) + "," + String(y) + ")";
+            }*/
+          
+        }) 
 
     })
     
@@ -526,10 +559,24 @@ oa_svg.append("g")
         .attr("stroke","#999")
     
       d3.selectAll(".label")
-        .attr("font-size","0px")
-        .attr("transform", function(d) {
-          return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
-      })
+        .attr("font-size",function(e){
+          //console.log(e,'linkdest',link_dests)
+          if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
+            return "0.8em";
+          }
+          else{return "0px";}
+        }) /*
+        .attr("transform",function(d){
+          //console.log(e,'linkdest',link_dests)
+          if(String(d.index) === String(node_id) ){
+            if (String(node_id).includes("Open Society") || String(node_id).includes("Soros")){
+              return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            }
+            // let's keep the text in a constant position to make it UI friendly...
+            else {return "translate("+netWidth/2+",15)"};
+            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+          }
+        })*/
     
     })
     
@@ -546,7 +593,13 @@ oa_svg.append("g")
     
       texts
       .attr("transform", function(d) {
-          return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+            return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+          }
+          else  {
+            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            return "translate("+netWidth/2+",15)"
+          };
       });
     });
     

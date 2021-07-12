@@ -39,13 +39,21 @@ body {
   padding: 0;
 }
 
+
+.flex-grid {
+  display: flex;
+}
+.col {
+  flex: 1;
+}
+/*
 #wrapper{
   width: 100%;
   display: flex;
   margin: 2%;
 
+}*/
 
-}
 
 #area-funder-table{
   width: 55vw;
@@ -58,6 +66,12 @@ body {
   height: 50vh;
   padding: 1%;
 }
+#community-info{
+  background-color: aliceblue;
+  width: 45vw;
+  height: 20vh;
+}
+
 
 
 
