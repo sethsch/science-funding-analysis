@@ -76,14 +76,14 @@ d3.csv("/data/researchAreas_funder_associations.csv",d3.autoType).then(data=> {
   var cellHeight = 33;
 
   var funders = ["Mellon",	"Packard",	"Gates",	"OSF",	"RWJ",	"Hewlett",	"Ford"]
-  
-  d3.selectAll("thead td").data(funders).on("click", function(e) {
+  /*
+  d3.selectAll(".funder-table-head td").data(funders).on("click", function(e) {
     //console.log("click",e,data)
     let col = e.target.innerHTML
     tr.sort(function(a, b) { return b[col] - a[col]; });
   });
   
-  var tr = d3.select("tbody").selectAll("tr")
+  var tr = d3.select("#funder-table-body").selectAll("tr")
       .data(data)
     .enter().append("tr");
   
@@ -109,7 +109,7 @@ d3.csv("/data/researchAreas_funder_associations.csv",d3.autoType).then(data=> {
       .attr("y",cellHeight/2)
       .attr("dy",".35em")
       .text(d=>d3.format(".0%")(d))  // rounded percentage, "12%"
-
+*/
 
 
 })
@@ -145,15 +145,12 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
 
 
 
-  const osf = data['osf']['Research Areas']['Computer Science']
-  const citations = osf['citation_stats'][9].value
-  const plotWidth = 500;
-  const margin = {left: 20, right: 20, top: 20, bottom: 20}
-  const plotHeight = 100;
-  const bandwidth = 40;
+  const osf = data['osf']['Research Areas']['Neurosciences & Neurology']
+  var citations = osf['citation_stats'][9].value
+ 
   
 
-  d3.select("#subject-title").text("Business & Economics - " +
+  d3.select("#subject-title").text("Neurosciences & Neurology - " +
                                   osf['num_pubs']+" publications, "+
                                   d3.format(".0%")(osf['pct_of_all'])
                                    )
@@ -211,39 +208,175 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
 
 console.log("did we get osf?",osf)
 
+const plotWidth = 500;
+const margin = {left: 40, right: 40, top: 20, bottom: 20}
+const plotHeight = 250;
+const bandwidth = 60;
+
 let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("height",plotHeight)
 
-let stats = boxplotStats(citations)
+//citations = citations.filter(d=>d>0)
 
+let stats = boxplotStats(citations)
+ // render annotations
+ const fiveNums = stats.fiveNums
+ const iqr = stats.iqr
+ const step = stats.step
+ const whiskers = stats.whiskers
+ const outliers = stats.points.filter(d => d.outlier)
+ const farouts = stats.points.filter(d => d.farout)
+ const fences = stats.fences.slice()
+ const sixNums = fiveNums.slice()
+ sixNums.push(d3.mean(citations))
+
+ console.log("five nums",fiveNums)
 console.log("stats",stats)
 
 let x = d3.scaleLinear()
   .domain(d3.extent(citations))
   .range([margin.left, plotWidth-margin.right*2])
 
+const fencePath = fence => `M${x(fence.start)},0 L${x(fence.start)},5 L${x(fence.end)},5 L${x(fence.end)},0`
+
+
+/*let x = d3.scaleLinear()
+  .domain(d3.extent(citations))
+  .range([plotHeight-margin.bottom,margin.top])*/
+
+
 let plot = boxplot()
   .scale(x)
   .showInnerDots(false)
   .opacity(0.8)
   .bandwidth(bandwidth)
-  .boxwidth(8)
+  .boxwidth(bandwidth/3)
+  .vertical(false)
 
-svg.append("g").attr('transform',`translate(${margin.left}, 0)`).datum(stats).call(plot)
 
-svg.append('g')
-.attr('class', 'axis')
-.attr('transform', `translate(${margin.left}, ${bandwidth-10})`)
-.attr('color', '#888')
-.call(d3.axisBottom()
-        .scale(x)
-        .ticks(4)
-        .tickValues(stats.fiveNums.slice(1,5)) 
-      )
 
-d3.selectAll(".point").attr("r",3)
+  svg.append('g')
+    .attr('class', 'data')
+    .attr('transform', `translate(${margin.left}, ${plotHeight * 0.35})`)
+  svg.append('g')
+    .attr('class', 'five-nums-ticks')
+    .attr('transform', `translate(${margin.left}, ${plotHeight - (bandwidth * 1.10)})`)
+  svg.append('g')
+    .attr('class', 'five-nums-labels')
+    .attr('transform', `translate(${margin.left}, ${plotHeight - (bandwidth * 1.25)})`)
+  svg.append('g')
+    .attr('class', 'fences-ticks')
+    .attr('transform', `translate(${margin.left}, ${plotHeight * 0.45})`)
+  svg.append('g')
+    .attr('class', 'fences-labels')
+    .attr('transform', `translate(${margin.left}, ${plotHeight * 0.45 + 10})`)
+  svg.append('g')
+    .attr('class', 'plot')
+    .attr('transform', `translate(${margin.left}, ${plotHeight * 0.65})`)
+  svg.append('g')
+    .attr('class', 'axis')
+    .attr('transform', `translate(${margin.left}, ${plotHeight - 20})`)
+    .attr('color', '#888')
+    .call(d3.axisBottom().scale(x))
+  svg.select('.axis').selectAll('line')
+    .attr('stroke', '#888')
+  svg.select('.axis').selectAll('path')
+    .attr('stroke', '#888')
+  svg.select('.axis').selectAll('text')
+    .attr('fill', '#888')
+    .style('font-family', 'sans-serif')
+    .style('font-size', '11')
+
+svg.select(".plot").datum(stats).transition().attr("color","steelblue").call(plot)
+
+
+
+
+/* data dots
+const dots = svg.select('.data').selectAll('circle').data(stats.points, d => d.value)
+dots.enter()
+  .append('circle')
+  .attr('cx', d => x(d.value))
+  .attr('r', 0)
+  .attr('opacity', 0.0)
+  .attr('fill', '#888')
+  .merge(dots)
+  .transition()
+  .attr('cx', d => x(d.value))
+  .attr('r', 3)
+  .attr('opacity', 0.8)
+dots.exit()
+  .transition()
+  .attr('r', 0)
+  .attr('opacity', 0.0)
+  .remove()*/
+
+
+  // five numbers + mean
+  const fiveNumsTicks = svg.select('.five-nums-ticks').selectAll('line').data(sixNums)
+  fiveNumsTicks.enter()
+    .append('line')
+    .attr('y1', (_, i) => i === 5 ? -24 : -8)
+    .attr('y2', 0)
+    .attr('stroke', '#888')
+    .attr('x1', x(fiveNums[2]))
+    .attr('x2', x(fiveNums[2]))
+    .merge(fiveNumsTicks)
+    .transition()
+    .attr('x1', x)
+    .attr('x2', x)
+  fiveNumsTicks.exit()
+    .remove()
+
+  const fiveNumsLabels = svg.select('.five-nums-labels').selectAll('text').data(sixNums)
+  fiveNumsLabels.enter()
+    .append('text')
+    .style('font-family', 'sans-serif')
+    .style('font-size', '13')
+    .attr('fill', '#888')
+    .attr('text-anchor', 'start')
+    .text((_, i) => ['min', 'q1', 'q2', 'q3', 'max', 'mean'][i])
+    .attr('transform', (_, i) => `translate(${x(fiveNums[2]) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
+    .merge(fiveNumsLabels)
+    .transition()
+    .attr('transform', (d, i) => `translate(${x(d) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
+  fiveNumsLabels.exit()
+    .remove()
+
+  /*fences
+  const fencesTicks = svg.select('.fences-ticks').selectAll('path').data(fences)
+  fencesTicks.enter()
+    .append('path')
+    .attr('fill', 'none')
+    .attr('stroke', '#888')
+    .attr('d', fencePath)
+    .merge(fencesTicks)
+    .transition()
+    .attr('d', fencePath)
+  fencesTicks.exit()
+    .remove()
+
+  const fencesLabels = svg.select('.fences-labels').selectAll('text').data(fences)
+  fencesLabels.enter()
+    .append('text')
+    .style('font-family', 'sans-serif')
+    .style('font-size', '13')
+    .attr('fill', '#888')
+    .attr('text-anchor', 'middle')
+    .attr('alignment-baseline', 'hanging')
+    .attr('transform', `translate(${x(fiveNums[2]) + 3}, 0)`)
+    .text((d, i) => ['outer', 'inner', 'iqr', 'inner', 'outer'][i])
+    .merge(fencesLabels)
+    .transition()
+    .attr('transform', d =>`translate(${x((d.start + d.end) * 0.5) + 3}, 0)`)
+  fencesLabels.exit()
+    .remove()*/
+
+
+
 
 let citation_info = d3.select("#citation-stats").append("p")
 
+// consider using pre-computed or later computed if we're going to drop the 0's
 let citation_infoText = "<ul><li>% of Publications w. 0 citations to date: "+
                                   d3.format(".0%")(osf["citation_stats"][1].value) + "</li>" +
                         "<li>Top 25%: " + osf["citation_stats"][4].value + "+ citations </li>" +
@@ -252,6 +385,86 @@ let citation_infoText = "<ul><li>% of Publications w. 0 citations to date: "+
 
 
 citation_info.html(citation_infoText);
+
+
+
+/// DENSITY PLOT
+  // set the dimensions and margins of the graph
+  var densityMargin = { top: 30, right: 30, bottom: 30, left: 50 },
+    densityWidth = 480 - densityMargin.left - densityMargin.right,
+    densityHeight = 240 - densityMargin.top - densityMargin.bottom;
+
+  // append the svg object to the body of the page
+  var dens_svg = d3.select("#density-plot")
+    .append("svg")
+    .attr("width", densityWidth + densityMargin.left + densityMargin.right)
+    .attr("height", densityHeight + densityMargin.top + densityMargin.bottom)
+    .append("g")
+    .attr("transform",
+      "translate(" + densityMargin.left + "," + densityMargin.top + ")");
+
+
+
+ /* YOUR LIST */
+  
+
+  // add the x Axis
+  var densXscale = d3.scaleLinear()
+    .domain([0, d3.max(citations,d=>d)])
+    .range([0, densityWidth]);
+    dens_svg.append("g")
+    .attr("transform", "translate(0," + densityHeight + ")")
+    .call(d3.axisBottom(densXscale));
+
+  // set the parameters for the histogram
+  var histogram = d3.histogram()
+  .value(function(d){return d;})   // I need to give the vector of value
+  .domain(densXscale.domain())  // then the domain of the graphic
+  .thresholds(densXscale.ticks(10)); // then the numbers of bins
+
+  // And apply this function to data to get the bins
+  var bins = histogram(citations);
+
+  // Y axis: scale and draw:
+  var densYscale = d3.scaleLinear()
+  .range([densityHeight, 0]);
+  densYscale.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+  dens_svg.append("g")
+  .call(d3.axisLeft(densYscale));
+
+  // append the bar rectangles to the svg element
+  dens_svg.selectAll("rect")
+  .data(bins)
+  .enter()
+  .append("rect")
+    .attr("x", 1)
+    .attr("transform", function(d) { return "translate(" + densXscale(d.x0) + "," + densYscale(d.length) + ")"; })
+    .attr("width", function(d) { return densXscale(d.x1) - densXscale(d.x0) -1 ; })
+    .attr("height", function(d) { return densityHeight - densYscale(d.length); })
+    .style("fill", function(d){ if(d.x0<140){return "orange"} else {return "#69b3a2"}})
+
+  // Append a vertical line to highlight the separation
+  dens_svg
+  .append("line")
+  .attr("x1", densXscale(40) )
+  .attr("x2", densXscale(40) )
+  .attr("y1", densYscale(0))
+  .attr("y2", densYscale(45))
+  .attr("stroke", "grey")
+  .attr("stroke-dasharray", "4")
+  dens_svg
+  .append("text")
+  .attr("x", densXscale(40))
+  .attr("y", densYscale(50))
+  .text("threshold: 140")
+  .style("font-size", "15px")
+
+
+
+
+
+
+///// OPEN ACCESS
 
 let oa_plotHeight = 33;
 
@@ -347,6 +560,10 @@ oa_svg.append("g")
           .on("drag", dragged)
           .on("end", dragended);
     }
+
+
+
+    
     state.network = graph;
     //console.log("global state",state);
     
@@ -373,20 +590,28 @@ oa_svg.append("g")
     const links = osf['links'].map(d=>Object.create(d))
 
 
+  
 
+    
 
 
     const circScale = d3.scaleSqrt()
     .domain([1, d3.max(nodes,d=>d.value)])
     .range([6, 20]);
 
+    const linkScale = d3.scaleSqrt()
+    .domain([1, d3.max(links,d=>d.value)])
+    .range([1, 8]);
+
     //const links = state.network.links.map(d => Object.create(d));
     //const nodes = state.network.nodes.map(d => Object.create(d));
     const radius = 5;
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(-100))
-        .force("center", d3.forceCenter(netWidth / 2, netHeight / 2));
+        .force("charge", d3.forceManyBody().strength(-90))
+        .force("center", d3.forceCenter(netWidth / 2, netHeight / 2))
+
+  
     
     const net_svg = d3.select("#network-graph").append("svg")
         .attr("width",netWidth)
@@ -399,7 +624,7 @@ oa_svg.append("g")
       .selectAll("line")
       .data(links)
       .join("line")
-        .attr("stroke-width", d => Math.sqrt(d.value))
+        .attr("stroke-width", d => linkScale(d.value))
         .attr("class","link-line")
         .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
     
@@ -526,14 +751,14 @@ oa_svg.append("g")
         .attr("transform",function(d){
           //console.log(e,'linkdest',link_dests)
           if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
           }
           else if (String(d.index) === String(node_id) ){
             // let's keep the text in a constant position to make it UI friendly...
-            return "translate("+netWidth/2+",15)"
+            return "translate("+String(netWidth/2)+",15)"
           }
 
-            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
 
             /* let's try an alternative, tracking to mouse
             else {
@@ -565,18 +790,17 @@ oa_svg.append("g")
             return "0.8em";
           }
           else{return "0px";}
-        }) /*
+        }) 
         .attr("transform",function(d){
-          //console.log(e,'linkdest',link_dests)
-          if(String(d.index) === String(node_id) ){
-            if (String(node_id).includes("Open Society") || String(node_id).includes("Soros")){
-              return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
-            }
-            // let's keep the text in a constant position to make it UI friendly...
-            else {return "translate("+netWidth/2+",15)"};
-            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
           }
-        })*/
+          else {
+            // let's keep the text in a constant position to make it UI friendly...
+            return "translate("+String(netWidth/2)+",15)"
+          }
+
+        })
     
     })
     
@@ -594,10 +818,10 @@ oa_svg.append("g")
       texts
       .attr("transform", function(d) {
           if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
           }
           else  {
-            //return "translate(" + (d.x - 5) + "," + (d.y - 15) + ")";
+            //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
             return "translate("+netWidth/2+",15)"
           };
       });

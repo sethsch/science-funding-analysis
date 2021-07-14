@@ -1,12 +1,161 @@
-body {
-  /* ref: https://fonts.google.com/specimen/Source+Sans+Pro?selection.family=Source+Sans+Pro */
-  font-family: 'Source Sans Pro', sans-serif;
-  padding: 1em 3em;
+html, body {
+  height: 180vh;
+  width: 100vw;
+}
+
+h1 { 
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 56px; 
+  font-style: normal; 
+  font-variant: normal; 
+  font-weight: 500; 
+  line-height: 70px; 
+} 
+
+h2 { 
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 36px; 
+  font-style: normal; 
+  font-variant: normal; 
+  font-weight: 200; 
+  line-height: 45px; 
+} 
+
+
+  
+h3 { 
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 24px; 
+  font-style: normal; 
+  font-variant: normal; 
+  font-weight: 700; 
+  line-height: 30px; 
+} 
+
+h4 { 
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 16px; 
+  font-style: normal; 
+  font-variant: normal; 
+  font-weight: 700; 
+  line-height: 20px; 
+} 
+
+
+
+
+#title-panel{
+  height: auto;
+}
+#page-title{
+  text-align: center;
+  padding-top: 2%;
+  top:0;
+}
+
+#page-subtitle{
+  text-align: center;
+  margin-top: 0.25em;
+  margin-bottom: 2%;
+
+}
+
+#intro-panel{
+  padding-left: 18%;
+  padding-right: 18%;
+  padding-bottom: 3%;
+
+
+  text-align: justify;
+}
+#intro-text{
+  margin-bottom: 1%;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 24px; 
+  font-style: normal; 
+  font-variant: normal; 
+  font-weight: 300; 
+  line-height: 30px; 
 }
 
 .label {
   text-anchor: middle;
 }
+
+#main-panel{
+  padding: 4%;
+
+}
+
+.container{
+  margin-bottom: 33%;
+}
+
+.button-container{
+  position: sticky;
+  top: 0;
+  background-color: white;
+  padding-top: 1%;
+  padding-left: 4%;
+  padding-right: 4%;
+}
+
+
+/* horizontal scorlling buttons for subj areas */
+.section-title-panel{
+  background-color: floralwhite;
+  border: 1px solid gray;
+}
+
+.row-section-title{
+  padding-top: 12px;
+  text-align: center;
+}
+
+.graph-panel{
+  background-color: floralwhite;
+
+  border: 1px solid gray;
+
+}
+
+
+
+div.scrollmenu {
+  background-color: rgb(238, 236, 236);
+  overflow: auto;
+  white-space: nowrap;
+  margin-top: 0.5%;
+  margin-left: 2%;
+  margin-right: 2%;
+  margin-bottom: 3%;
+  
+}
+
+div.scrollmenu a {
+  display: inline-block;
+  color: darkslategrey;
+  text-align: center;
+  padding: 14px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+div.scrollmenu a:hover {
+  background-color: #777;
+}
+
+div.scrollmenu::webkit-scrollbar{
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+
+div.scrollmenu::-webkit-scrollbar-thumb:horizontal {
+display: none;
+}
+
 
 
 
@@ -28,7 +177,15 @@ body {
   background-color: lightgray;
 }
 
-
+#tables-column{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.table-striped{
+  margin: 3%;
+  float: left;
+}
 
 .axis {
   font-size: 16px;
@@ -55,6 +212,7 @@ body {
 }*/
 
 
+
 #area-funder-table{
   width: 55vw;
   height: 75vh;
@@ -75,13 +233,13 @@ body {
 
 
 
-table {
+#funder-table {
   border-collapse: collapse;
   font: 10px sans-serif;
   width: 720px;
 }
 
-th {
+#funder-table th {
   font-weight: normal;
   text-align: left;
   padding-right: 6px;
@@ -90,7 +248,7 @@ th {
   
 }
 
-thead {
+#funder-table thead {
   position: sticky;
   top: 0;
   margin-bottom: 15px;
@@ -99,7 +257,7 @@ thead {
 
 
 
-thead td {
+#funder-table thead td {
   cursor: s-resize;
   text-align: center;
   font-weight: bold;
@@ -113,13 +271,13 @@ thead td {
 }
 
 
-tbody tr:first-child td {
+#funder-table tbody tr:first-child td {
   padding-top: 2px;
 }
-tbody tr{
+#funder-table tbody tr{
   border-bottom: solid 1px lightgray;
 }
-tbody td {
+#funder-table tbody td {
   padding: 0rem;
   border: solid 0.5rem white;
   background-color: rgb(243, 243, 243);
@@ -130,14 +288,20 @@ tbody td {
   font: 10px sans-serif;
 }
 
-tbody rect {
+#funder-table tbody rect {
   fill: steelblue;
 }
 
-tbody tr:hover rect {
+#funder-table tbody tr:hover rect {
   fill: brown;
 }
 
 .axis text{
   font-size: 0.8em;
+}
+
+
+.box line{
+  stroke: blue;
+
 }
