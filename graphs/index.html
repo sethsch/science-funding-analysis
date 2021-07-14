@@ -10,7 +10,6 @@
 		
 		<!--Bootstrap css-->
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
-		<link rel='stylesheet' type='text/css' href="mockup_style.css">
 
     <!-- custom font: https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap -->
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
@@ -101,7 +100,7 @@
 
         <div class="row g-2">
           <div class="col-4 mh-100 section-title-panel">
-            <h5 class="row-section-title">Government & Law</h5>
+            <h5 class="row-section-title" id="subject-title"></h5>
             <div class="p-4 bg-light">
               <p>
                 Lorem Ipsum is simply dummy text of the printing and typesetting  industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
@@ -110,7 +109,9 @@
           </div>
           
           <div class="col-8 graph-panel">
-            <div class="p-4 border bg-light">Graph goes here</div>
+            <div class="p-4 border bg-light" id="pubs-img-graph">
+              
+            </div>
           </div>
 
 
@@ -367,18 +368,7 @@
 
     <!-- this is the line that loads in the main js script -->
     <script src="./main.js" type="module"></script>
-    <script>
-        const buttonRight = document.getElementById('slideRight');
-        const buttonLeft = document.getElementById('slideLeft');
 
-        buttonRight.onclick = function () {
-          document.getElementById('container').scrollLeft += 20;
-        };
-        buttonLeft.onclick = function () {
-          document.getElementById('container').scrollLeft -= 20;
-        };
-
-    </script>
   
   
 

@@ -150,11 +150,64 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
  
   
 
-  d3.select("#subject-title").text("Neurosciences & Neurology - " +
-                                  osf['num_pubs']+" publications, "+
-                                  d3.format(".0%")(osf['pct_of_all'])
+  d3.select("#subject-title").text("Neurosciences & Neurology" 
+                                  //+ " - "
+                                  //osf['num_pubs']+" publications, "+
+                                  //d3.format(".0%")(osf['pct_of_all'])
                                    )
+
+  //// Publications Graphic
+
+  let pubPlotHeight = 400
+  let pubPlotWidth = 800
+  var pub_svg = d3.select("#pubs-img-graph").append("svg").attr("width",pubPlotWidth).attr("height",pubPlotHeight)
     
+  let pub_list = [...Array(100).keys()]
+  console.log("publist",pub_list)
+
+  let base_pub_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-file-text" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>'
+  let green_pub_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-file-text" viewBox="0 0 16 16"><rect x="2" y="1" width="12" height="14" style="fill: rgb(173, 212, 174);"></rect><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>'
+  
+  
+  pub_svg.selectAll(".icons")
+    .data(pub_list)
+    .enter()
+    .append("g")
+    .append("svg")
+    .attr("height",36)
+    .attr("width",36)
+    
+    .attr("x",function(i) {
+      if (i < 20) { return 6 + (i*36);}
+      else if (i<40){ return 6 + (i-20)*36;}
+      else if (i<60){ return 6 + (i-40)*36;}
+      else if (i<80){ return 6 + (i-60)*36;}
+      else {return 6 + (i-80)*36;}
+    })
+    .attr("y",function(i){
+      console.log("y val i",i)
+      if (i < 20) { return 10;}
+      else if (i<40){ return 52;}
+      else if (i<60){ return 94;}
+      else if (i<80){ return 136;}
+      else {return 178;}
+
+    })
+    //.attr("viewBox","0 0 48 48")
+    .html(function(i){
+      if (i < osf['num_pubs']){
+        return green_pub_icon;
+      }
+      else {return base_pub_icon;}
+    })
+
+
+ 
+
+  
+   
+
+
 
   let kw = d3.select("#summary")
     .append("p")
