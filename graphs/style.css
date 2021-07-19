@@ -114,9 +114,8 @@ h4 {
 
 .graph-panel{
   background-color: floralwhite;
-
   border: 1px solid gray;
-
+  display: table;
 }
 
 
@@ -177,17 +176,52 @@ display: none;
   background-color: lightgray;
 }
 
+#pubs-img-graph{
+  display: table-cell;
+}
+.pubs-text{
+  text-shadow: 0.1rem 0.1rem 0.3rem darkslategrey;
+}
+.icons{
+  filter: drop-shadow(0.08rem 0.08rem 0.1rem rgba(0, 0, 0, 0.5));
 
+}
+
+#keywords-panel {
+  font-size: 22px;
+  font-variant: small-caps;
+  font-weight: 200;
+  line-height: normal;
+  vertical-align: middle;
+  display: table-cell;
+}
 
 
 #tables-column{
+  background-color: white !important;
+  height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .table-striped{
+  
+  height: 100%;
   margin: 3%;
   float: left;
+  font-size: 0.85em;
+}
+
+.rank-col{
+  font-weight: bold;
+}
+.name-col{
+  width: fit-content;
+
+}
+.pubs-col{
+  text-align: right
 }
 
 .axis {
@@ -227,6 +261,10 @@ display: none;
   height: 50vh;
   padding: 1%;
 }
+.link-line{
+  stroke:rgb(35, 35, 35);
+}
+
 #community-info{
   background-color: aliceblue;
   width: 45vw;
