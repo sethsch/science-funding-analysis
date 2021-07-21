@@ -83,6 +83,7 @@ export function boxplot() {
             jitter *
             bandwidth
     const r = Math.max(1.5, Math.sqrt(bandwidth) * 0.5)
+    //const r = 1.5
 
     let gWhisker = selection.select('g.whisker')
     if (gWhisker.empty())

@@ -183,8 +183,10 @@ display: none;
   text-shadow: 0.1rem 0.1rem 0.3rem darkslategrey;
 }
 .icons{
-  filter: drop-shadow(0.08rem 0.08rem 0.1rem rgba(0, 0, 0, 0.5));
-
+  filter: drop-shadow(0.08rem 0.08rem 0.04rem rgba(0, 0, 0, 0.5));
+}
+.point.outlier{
+  radius: 5.5 !important;
 }
 
 #keywords-panel {
@@ -248,7 +250,34 @@ display: none;
 
 }*/
 
+.box-ticklabel{
+  fill:silver;
+  text-anchor: end;
+  font-size: 0.9em;
+}
+.box-tickline{
+  stroke:silver;
+  stroke-width: 0.5px;
+}
+.box-ticknotes{
+  fill:silver;
+  font-size: 0.75em;
+}
+.x-axis .tick text{
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.y-axis .tick text{
+  font-size: 1em;
+  font-weight: bold;
+}
+.y-axis-title{
+  font-size: 1em;
+  /*font-weight: bold;*/
+  text-anchor: start;
+  fill: black;
 
+}
 
 #area-funder-table{
   width: 55vw;

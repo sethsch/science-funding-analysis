@@ -2,7 +2,6 @@ import { boxplot, boxplotStats } from './lib/d3-boxplot-0.7.6/src/boxplot.js';
 import { sortableBar } from './sortableBar.js'
 
 
-
 var state = {
   data : [],
   fileredData : [],
@@ -34,36 +33,27 @@ const panelDims = {
 }
 
 function wrap(text, width) {
-    text.each(function () {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            line = [],
-            lineNumber = 0,
-            lineHeight = 1.1, // ems
-            x = text.attr("x"),
-            y = text.attr("y"),
-            dy = 0, //parseFloat(text.attr("dy")),
-            tspan = text.text(null)
-                        .append("tspan")
-                        .attr("x", x)
-                        .attr("y", y)
-                        .attr("dy", dy + "em");
-        while (word = words.pop()) {
-            line.push(word);
-            tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                line.pop();
-                tspan.text(line.join(" "));
-                line = [word];
-                tspan = text.append("tspan")
-                            .attr("x", x)
-                            .attr("y", y)
-                            .attr("dy", ++lineNumber * lineHeight + dy + "em")
-                            .text(word);
-            }
-        }
-    });
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
 }
 
 
@@ -178,30 +168,58 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
 
 
 
-  let subj_area = "Business & Economics"
-  const osf = data['osf']['Research Areas'][subj_area]
-  var citations = osf['citation_stats'][9].value
+  //let subj_area = "International Relations"
+  let subj_area = "Neurosciences & Neurology"
+  //"Government & Law"
+  //"Business & Economics"
+
+  const osf = data['osf']
+  const osf_ra = data['osf']['Research Areas'][subj_area]
+  var citations = osf_ra['citation_stats'][9].value
+  var osf_citations_full = osf['citation_stats'][9].value
+
+  var area_citations = []
+  var funders = Object.keys(data)
+  for (var i = 0; i < funders.length; i++){
+    if (!(subj_area in data[funders[i]]['Research Areas'])) {
+    }
+    else {
+      let cit_stats = data[funders[i]]['Research Areas'][subj_area]['citation_stats'][9].value
+      for (var j = 0; j < cit_stats.length; j++) {
+        area_citations.push(cit_stats[j]);
+      }
+      
+    }
+  }
+ 
+  console.log('area citations',area_citations)
  
   
 
   d3.select("#subject-title").text(subj_area
                                   //+ " - "
-                                  //osf['num_pubs']+" publications, "+
-                                  //d3.format(".0%")(osf['pct_of_all'])
+                                  //osf_ra['num_pubs']+" publications, "+
+                                  //d3.format(".0%")(osf_ra['pct_of_all'])
                                    )
 
   //// Publications Graphic
 
-  let pubPlotHeight = 36*7
+  
+
+  let iconColor = "#242424"
+  let filledColor = "#65c268"
+  let iconSize = 38
+  //'rgb(173, 212, 174)'
+  let base_pub_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill=${iconColor} class="bi bi-file-text" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>`
+  let fill_pub_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill=${iconColor} class="bi bi-file-text" viewBox="0 0 16 16"><rect x="2" y="1" width="12" height="14" style="fill: ${filledColor};"></rect><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>`
+  
+  let pubPlotHeight = iconSize*7
   let pubPlotWidth = 800
   var pub_svg = d3.select("#pubs-img-graph").append("svg").attr("width",pubPlotWidth).attr("height",pubPlotHeight)
     
   let pub_list = [...Array(100).keys()]
   console.log("publist",pub_list)
 
-  let base_pub_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-file-text" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>'
-  let green_pub_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-file-text" viewBox="0 0 16 16"><rect x="2" y="1" width="12" height="14" style="fill: rgb(173, 212, 174);"></rect><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>'
-  
   // filters go in defs element
 var defs = pub_svg.append("defs");
     // create filter with id #drop-shadow
@@ -240,45 +258,44 @@ var defs = pub_svg.append("defs");
     .enter()
     .append("g")
     .append("svg")
-    .attr("height",36)
-    .attr("width",36)
+    .attr("height",iconSize)
+    .attr("width",iconSize)
     .attr("class","icons")
     //.style("filter", "url(#drop-shadow)")
     .attr("x",function(i) {
-      if (i < 20) { return 6 + (i*36);}
-      else if (i<40){ return 6 + (i-20)*36;}
-      else if (i<60){ return 6 + (i-40)*36;}
-      else if (i<80){ return 6 + (i-60)*36;}
-      else {return 6 + (i-80)*36;}
+      if (i < 20) { return 6 + (i*iconSize);}
+      else if (i<40){ return 6 + (i-20)*iconSize;}
+      else if (i<60){ return 6 + (i-40)*iconSize;}
+      else if (i<80){ return 6 + (i-60)*iconSize;}
+      else {return 6 + (i-80)*iconSize;}
     })
     .attr("y",function(i){
       console.log("y val i",i)
       if (i < 20) { return 10;}
-      else if (i<40){ return 52;}
-      else if (i<60){ return 94;}
-      else if (i<80){ return 136;}
-      else {return 178;}
+      else if (i<40){ return (1.16*iconSize) + 10;}
+      else if (i<60){ return (1.16*iconSize)*2 + 10;}
+      else if (i<80){ return (1.16*iconSize)*3 + 10;}
+      else {return (1.16*iconSize)*4 + 10;}
     })
     .html(function(i){
-      if (i < osf['num_pubs']){
-        return green_pub_icon;
+      // TO DO: swap in teh total number of pubs for the selected funder
+      if (i < Math.round(osf_ra['num_pubs']/1057*100,0)){
+        return fill_pub_icon;
       }
       else {return base_pub_icon;}
     })
 
     pub_svg.append("text")
       .attr("class","pubs-text")
-      .attr("x","90%")
+      .attr("x","95%")
       .attr("y","92%")
       .attr("dominant-baseline","middle")
       .attr("text-anchor","end")
       .attr("font-size","24px")
-      .text(`${osf['num_pubs']} of 1,057 publications`)
+      .text(`${osf_ra['num_pubs']} of 1,057 publications`)
 
 
   
-   
-
 
 
   let kw = d3.select("#keywords-panel")
@@ -313,10 +330,10 @@ var defs = pub_svg.append("defs");
     return p;
 
   }
-  kw.text(makeParagraph(osf['top_50_kw'],"keyword",30,false));
+  kw.text(makeParagraph(osf_ra['top_50_kw'],"keyword",30,false));
 
   let exceptions = ["Open Society","Soros"]
-  let top_cofunders = osf['top_cofunders']
+  let top_cofunders = osf_ra['top_cofunders']
   for (let i = 0;   i < exceptions.length; i++) {
     top_cofunders = top_cofunders.filter( d => ! String(d.funder).includes(exceptions[i]))
   }
@@ -348,8 +365,8 @@ var defs = pub_svg.append("defs");
  
   //let cofunders = d3.select("#summary")
   //    .append("p")
-  //cofunders.text(makeParagraph(osf['top_cofunders'],"funder",10,true))
-  let top_journals = osf['journals_20']
+  //cofunders.text(makeParagraph(osf_ra['top_cofunders'],"funder",10,true))
+  let top_journals = osf_ra['journals_20']
   let journals_table = d3.select("#top-journals").append("tbody")
   let jour_rows = journals_table
     .selectAll("tr")
@@ -371,10 +388,10 @@ var defs = pub_svg.append("defs");
  
   //let journals = d3.select("#summary")
   //  .append("p")
-  //journals.text(toTitleCase(makeParagraph(osf['journals_20'],'journal',10,true)))
+  //journals.text(toTitleCase(makeParagraph(osf_ra['journals_20'],'journal',10,true)))
   
 
-  let top_authors = osf['authors_top25']
+  let top_authors = osf_ra['authors_top25']
   let authors_table = d3.select("#top-authors").append("tbody")
   let auth_rows = authors_table
     .selectAll("tr")
@@ -398,7 +415,7 @@ var defs = pub_svg.append("defs");
   //let authors = d3.select("#summary")
   //  .append("p")
 
-  //authors.text(makeParagraph(osf['authors_top25'],'author',15,true))
+  //authors.text(makeParagraph(osf_ra['authors_top25'],'author',15,true))
    
     
   
@@ -409,12 +426,11 @@ var defs = pub_svg.append("defs");
 
 console.log("did we get osf?",osf)
 
-const plotWidth = 500;
+const plotWidth = 800;
 const margin = {left: 40, right: 40, top: 20, bottom: 20}
-const plotHeight = 250;
+const plotHeight = 500;
 const bandwidth = 60;
 
-let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("height",plotHeight)
 
 //citations = citations.filter(d=>d>0)
 
@@ -433,185 +449,73 @@ let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("heig
 //console.log("five nums",fiveNums)
 //console.log("stats",stats)
 
-let x = d3.scaleLinear()
-  .domain(d3.extent(citations))
-  .range([margin.left, plotWidth-margin.right])
-/*
-//const fencePath_x = fence => `M${x(fence.start)},0 L${x(fence.start)},5 L${x(fence.end)},5 L${x(fence.end)},0`
-const fencePath = fence => `M0,${x(fence.start)} L5,${x(fence.start)} L5,${x(fence.end)} L0,${x(fence.end)}`
 
-
-/*let x = d3.scaleLinear()
-  .domain(d3.extent(citations))
-  .range([plotHeight-margin.bottom,margin.top])
-
-
-let plot = boxplot()
-  .scale(x)
-  .showInnerDots(false)
-  .opacity(0.8)
-  .bandwidth(bandwidth)
-  .boxwidth(bandwidth/3)
-  .vertical(true)
-
-
-
-  svg.append('g')
-    .attr('class', 'data')
-    .attr('transform', `translate(${margin.left}, 0)`)
-  svg.append('g')
-    .attr('class', 'five-nums-ticks')
-    .attr('transform', `translate(${margin.left}, 0)`)
-  svg.append('g')
-    .attr('class', 'five-nums-labels')
-    .attr('transform', `translate(${margin.left}, 0})`)
-  svg.append('g')
-    .attr('class', 'fences-ticks')
-    .attr('transform', `translate(${margin.left}, 0)`)
-  svg.append('g')
-    .attr('class', 'fences-labels')
-    .attr('transform', `translate(${margin.left}, 0)`)
-  svg.append('g')
-    .attr('class', 'plot')
-    .attr('transform', `translate(${margin.left}, 10})`)
-  svg.append('g')
-    .attr('class', 'axis')
-    .attr('transform', `translate(${margin.left}, ${plotHeight - margin-bottom})`)
-    .attr('color', '#888')
-    .call(d3.axisLeft().scale(x))
-  svg.select('.axis').selectAll('line')
-    .attr('stroke', '#888')
-  svg.select('.axis').selectAll('path')
-    .attr('stroke', '#888')
-  svg.select('.axis').selectAll('text')
-    .attr('fill', '#888')
-    .style('font-family', 'sans-serif')
-    .style('font-size', '11')
-
-svg.select(".plot").datum(stats).transition().attr("color","steelblue").call(plot)*/
-
-
-
-
-
-/* data dots
-const dots = svg.select('.data').selectAll('circle').data(stats.points, d => d.value)
-dots.enter()
-  .append('circle')
-  .attr('cx', d => x(d.value))
-  .attr('r', 0)
-  .attr('opacity', 0.0)
-  .attr('fill', '#888')
-  .merge(dots)
-  .transition()
-  .attr('cx', d => x(d.value))
-  .attr('r', 3)
-  .attr('opacity', 0.8)
-dots.exit()
-  .transition()
-  .attr('r', 0)
-  .attr('opacity', 0.0)
-  .remove()
-
-
-  // five numbers + mean
-  const fiveNumsTicks = svg.select('.five-nums-ticks').selectAll('line').data(sixNums)
-  fiveNumsTicks.enter()
-    .append('line')
-    .attr('y1', (_, i) => i === 5 ? -24 : -8)
-    .attr('y2', 0)
-    .attr('stroke', '#888')
-    .attr('x1', x(fiveNums[2]))
-    .attr('x2', x(fiveNums[2]))
-    .merge(fiveNumsTicks)
-    .transition()
-    .attr('x1', x)
-    .attr('x2', x)
-  fiveNumsTicks.exit()
-    .remove()
-
-  const fiveNumsLabels = svg.select('.five-nums-labels').selectAll('text').data(sixNums)
-  fiveNumsLabels.enter()
-    .append('text')
-    .style('font-family', 'sans-serif')
-    .style('font-size', '13')
-    .attr('fill', '#888')
-    .attr('text-anchor', 'start')
-    .text((_, i) => ['min', 'q1', 'q2', 'q3', 'max', 'mean'][i])
-    .attr('transform', (_, i) => `translate(${x(fiveNums[2]) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
-    .merge(fiveNumsLabels)
-    .transition()
-    .attr('transform', (d, i) => `translate(${x(d) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
-  fiveNumsLabels.exit()
-    .remove()
-
-  /*fences
-  const fencesTicks = svg.select('.fences-ticks').selectAll('path').data(fences)
-  fencesTicks.enter()
-    .append('path')
-    .attr('fill', 'none')
-    .attr('stroke', '#888')
-    .attr('d', fencePath)
-    .merge(fencesTicks)
-    .transition()
-    .attr('d', fencePath)
-  fencesTicks.exit()
-    .remove()
-
-  const fencesLabels = svg.select('.fences-labels').selectAll('text').data(fences)
-  fencesLabels.enter()
-    .append('text')
-    .style('font-family', 'sans-serif')
-    .style('font-size', '13')
-    .attr('fill', '#888')
-    .attr('text-anchor', 'middle')
-    .attr('alignment-baseline', 'hanging')
-    .attr('transform', `translate(${x(fiveNums[2]) + 3}, 0)`)
-    .text((d, i) => ['outer', 'inner', 'iqr', 'inner', 'outer'][i])
-    .merge(fencesLabels)
-    .transition()
-    .attr('transform', d =>`translate(${x((d.start + d.end) * 0.5) + 3}, 0)`)
-  fencesLabels.exit()
-    .remove()*/
-
-
-  svg
-    .append('g')
-    .attr('class', 'plots')
-
-  
-    const dataset = [citations,citations,citations,citations]
+    var plotcats = [subj_area+" (OSF)",subj_area+" (Other Funders)","All Research Areas (OSF)"]
+    const dataset = [citations,area_citations,osf_citations_full]
+    const filt_datasets = []
+    dataset.forEach(function(ds){
+      let norm_ds = []
+      for (var i = 0; i<ds.length; i++){
+        //let nval = (ds[i] - d3.min(ds,d=>d)) / (d3.max(ds,d=>d) - d3.min(ds,d=>d))
+        if (ds[i] > 0) {norm_ds.push(ds[i])}
+        
+      }
+      filt_datasets.push(norm_ds)
+    })
+    var maxTicks = []
+    var medTicks = []
     const stats = dataset.map(function(d) {
       let s = boxplotStats(d);
       s["mean"] = d3.mean(d);
+      s["labelNums"] = s.fiveNums.concat(s["mean"]).slice(1)
+      medTicks.push(s.fiveNums[2])
+      //tickNums.push(s.fiveNums[3])
+      maxTicks.push(s.fiveNums[4])
       return s;
-    
     })
+    maxTicks.push(d3.mean(medTicks))
+    var tickNums = [...new Set(maxTicks)];
+
     console.log("stats",stats)
- 
+    var all_citations = []
+    dataset.forEach(function(citation_dist){
+      for (var i = 0; i<citation_dist.length; i++){
+        all_citations.push(citation_dist[i])
+      }
+    })
 
-
-
-
+  let svg = d3.select("#boxplot").append("svg").attr("width",plotWidth).attr("height",plotHeight)
+  svg
+    .append('g')
+    .attr('class', 'plots')
+      // set the dimensions and margins of the graph
     const H = plotHeight,
-          W = plotWidth,
-          M = ({L: 5, R: 5, T: 5, B: 5})
+      W = plotWidth,
+      M = ({L: 5, R: 5, T: 25, B: 50})
+    
+    
     const vertical = true;
     const minimalStyle = false;
     const useSymbolTick = true;
     const colorOption = true;
-    const jitter = 0.5;
+    const jitter = 0.25;
     var opacity = 0.7;
     const colors = d3.schemeCategory10
-    const scale = d3.scaleLinear()
-      .domain([0,d3.max(citations,d=>d)])
+    const scale = d3.scalePow()
+      .exponent(0.25)
+      .domain([0,d3.max(all_citations,d=>d)])
       .range(vertical ? [H - M.T - M.B, M.T] : [M.L, W - M.L - M.R])
 
     const band = d3.scaleBand()
-      .domain(d3.range(stats.length))
+      //.domain(d3.range(stats.length))
+      .domain(plotcats)
       .range(vertical == true ? [M.L, W - M.L - M.R] : [M.T, H - M.T - M.B])
       .paddingInner(minimalStyle == true ? 0 : 0.3)
       .paddingOuter(minimalStyle == true ? 2 : 0.2)
+
+
+    
+
     const plot = boxplot()
       .scale(scale)
       .jitter(jitter)
@@ -619,7 +523,7 @@ dots.exit()
       .showInnerDots(false)
       //.symbol(useSymbolTick == true ? d3.boxplotSymbolTick : d3.boxplotSymbolDot)
       .bandwidth(band.bandwidth())
-      .boxwidth(minimalStyle == true ? 6 : 30)
+      .boxwidth(minimalStyle == true ? 6 : 45)
       .vertical(vertical)
       .key(d => d)
 
@@ -629,64 +533,123 @@ dots.exit()
       .join('g')
       .attr('class', 'plot')
       .transition()
-      .attr('transform', (_, i) => `translate(${vertical == true ? [band(i), 0] : [0, band(i)]})`)
+      .attr('transform', (_, i) => `translate(${vertical == true ? [band(plotcats[i]), 0] : [0, band(plotcats[i])]})`)
       .attr('color', (_, i) => colorOption == true ? colors[i / 2|0] : '#000')
       .call(plot)
 
-  const fiveNumsTicks = svg.select("g.plots").selectAll(".plot")
-    .join('g')
-    .selectAll("line")
-    .data(stats)
-    
-  fiveNumsTicks
-    .enter()
-    .append("line")
-    .attr("class","plot-annotations")
-    .transition()
-    .attr("y1",d=>scale(d.fiveNums[2]))
-    .attr("y2",d=>scale(d.fiveNums[2]))
-    .attr("x1",band.bandwidth()/4)
-    .attr("x2",0)
-    .attr('stroke', '#888')
-    .merge(fiveNumsTicks)
-    .transition()
-    .attr("x1",scale)
-    .attr("x2",scale)
 
-  fiveNumsTicks.exit().remove()
+  // Add scales to axis
+  var y_axis = d3.axisLeft()
+    .scale(scale)
+    .tickValues(tickNums)
+    //.ticks(6,",.5")
 
-
-
-
-    /*fiveNumsTicks = svg.select('.five-nums-ticks').selectAll('line').data(sixNums)
-    fiveNumsTicks.enter()
-      .append('line')
-      .attr('y1', (_, i) => i === 5 ? -24 : -8)
-      .attr('y2', 0)
-      .attr('stroke', '#888')
-      .attr('x1', x(fiveNums[2]))
-      .attr('x2', x(fiveNums[2]))
-      .merge(fiveNumsTicks)
-      .transition()
-      .attr('x1', x)
-      .attr('x2', x)
-    fiveNumsTicks.exit()
-      .remove()
   
-    const fiveNumsLabels = svg.select('.five-nums-labels').selectAll('text').data(sixNums)
-    fiveNumsLabels.enter()
+  var bandAxis = d3.axisBottom()
+    .scale(band)
+    .tickSize(0)
+    
+
+  //Append group and insert axis
+  svg.append("g")
+    .call(y_axis)
+    .attr("class","y-axis")
+    .attr("transform",`translate(${M.L+30},${M.T})`)
+  
+  svg.select(".y-axis")
+    .append("text")
+    .attr("class","y-axis-title")
+    .attr("transform",`translate(${M.L - 30},${M.T - 10})`)
+    .text("Citations to date")
+
+  
+  svg.append("g")
+    .call(bandAxis)
+    .call(g => g.select(".domain").remove())
+    .attr("transform",`translate(${M.L},${plotHeight - M.B + 5})`)
+    .attr("class","x-axis")
+
+  svg.select(".x-axis").selectAll(".tick text")
+    .call(wrap,band.bandwidth() * 0.75)
+  
+
+  var boxplots = svg.select("g.plots").selectAll(".plot");
+    //.join('g')
+    //.selectAll("line")
+    //.datum(stats)
+
+  boxplots.selectAll(".point.outlier").style("r",3)
+  
+  boxplots.each(function(x){
+
+    console.log('fivenumticks',this)
+    console.log("the data is",x)
+
+    var labels = d3.select(this).selectAll(".box-ticklabel").data(x.labelNums)
+    labels
+      .enter()
+      .append("text")
+      .attr("class","box-ticklabel")
+      .attr("transform",(d)=>`translate(${band.bandwidth()/4},${scale(d)+2})`)
+      .text(function(d,i){
+        if (i < 4) {
+          return String(Math.round(d,0));
+        }
+        else {return ""}
+      })
+
+
+    var ticks = d3.select(this).selectAll(".box-tickline").data(x.labelNums)
+    ticks
+        .enter()
+        .append('line')
+        .attr("class","box-tickline")
+        .attr("x1",band.bandwidth()/4 )
+        .attr("x2",band.bandwidth()/8 + band.bandwidth()/4 + 2)
+        .attr('y1', d=>scale(d))
+        .attr('y2', d=>scale(d))
+        .attr("opacity",function(d,i){
+          if (i < 4){
+            return 1;
+          }
+          else {return 0;}
+        })
+
+    // TO DO: customize which labels and summaries will show
+    var annotations = d3.select(this).selectAll(".box-ticknotes").data(x.labelNums)
+
+    annotations.enter()
       .append('text')
-      .style('font-family', 'sans-serif')
-      .style('font-size', '13')
-      .attr('fill', '#888')
-      .attr('text-anchor', 'start')
-      .text((_, i) => ['min', 'q1', 'q2', 'q3', 'max', 'mean'][i])
-      .attr('transform', (_, i) => `translate(${x(fiveNums[2]) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
-      .merge(fiveNumsLabels)
-      .transition()
-      .attr('transform', (d, i) => `translate(${x(d) + 3}, ${i === 5 ? -16 : 0}) rotate(-45)`)
-    fiveNumsLabels.exit()
-      .remove()*/
+      .attr("class","box-ticknotes")
+      .text(function(_,i){
+        if (i < 4) {
+          return ['25ᵗʰ', 'mean', '75ᵗʰ', 'Top Cited', 'mean'][i];
+        }
+        else {return ""}
+      })
+      .attr('transform', function (d, i) {
+        if (i !== 3) {
+          return  `translate(${band.bandwidth()/8},${scale(d)+2})`;
+        }
+        else {
+          return `translate(${band.bandwidth()/8},${scale(d)-10})`
+        }
+      })
+      .attr("text-anchor",function(d,i){
+        if (i != 3){
+          return "end";
+        }
+        else {return "middle";}
+      })
+    
+
+   
+
+  })
+  console.log("fiveNums",stats)
+    
+ 
+ 
 
 
 
@@ -694,9 +657,9 @@ let citation_info = d3.select("#citation-stats").append("p")
 
 // consider using pre-computed or later computed if we're going to drop the 0's
 let citation_infoText = "<ul><li>% of Publications w. 0 citations to date: "+
-                                  d3.format(".0%")(osf["citation_stats"][1].value) + "</li>" +
-                        "<li>Top 25%: " + osf["citation_stats"][4].value + "+ citations </li>" +
-                        "<li>Top 10%: " + String(parseInt(osf["citation_stats"][6].value)) + "+ citations</li></ul>"
+                                  d3.format(".0%")(osf_ra["citation_stats"][1].value) + "</li>" +
+                        "<li>Top 25%: " + osf_ra["citation_stats"][4].value + "+ citations </li>" +
+                        "<li>Top 10%: " + String(parseInt(osf_ra["citation_stats"][6].value)) + "+ citations</li></ul>"
 
 
 
@@ -796,8 +759,8 @@ var oa_plotWidth = $("#oa-stats").parent().width();
 
 //console.log(osf,"at oa sumary break")
 // TO DO: re-arrange based on keys rather htan index to make no-oa first or last...
-let oa = osf["oa_summary"]
-//let oa = [osf["oa_summary"][2],osf["oa_summary"][0],osf["oa_summary"][3],osf["oa_summary"][1]]
+let oa = osf_ra["oa_summary"]
+//let oa = [osf_ra["oa_summary"][2],osf_ra["oa_summary"][0],osf_ra["oa_summary"][3],osf_ra["oa_summary"][1]]
 
 
 
@@ -826,7 +789,7 @@ let oa_color = d3.scaleOrdinal()
     .domain(oa_stack.map(d => d.name))
     .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), oa_stack.length))
 
-let oa_formatPercent = x.tickFormat(null, "%")
+let oa_formatPercent = oa_xScale.tickFormat(null, "%")
 
 var legend_svg = d3.select("#oa-legend").append("svg").attr("height",80).attr("width",400)
   
@@ -934,19 +897,19 @@ oa_svg.append("g")
       return Math.floor(Math.random() * max);
     }
     //var nodes = []
-    var nodes = osf['nodes']
+    var nodes = osf_ra['nodes']
     /*var node_vals = []
-    for (let i = 0; i < osf['nodes'].length; i++){
-      let val = osf['top_cofunders'].filter(d=>d.funder === osf['nodes'][i])
+    for (let i = 0; i < osf_ra['nodes'].length; i++){
+      let val = osf_ra['top_cofunders'].filter(d=>d.funder === osf_ra['nodes'][i])
       
-      let a = {"id":osf['nodes'][i], "group": getRandomInt(8), "value": val[0].value}
+      let a = {"id":osf_ra['nodes'][i], "group": getRandomInt(8), "value": val[0].value}
       nodes.push(a)
       
     }*/
     //console.log("console logging...","node vals",nodes)
     
     nodes = nodes.map(d => Object.create(d));
-    const links = osf['links'].map(d=>Object.create(d))
+    const links = osf_ra['links'].map(d=>Object.create(d))
 
 
   
