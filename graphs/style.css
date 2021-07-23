@@ -201,7 +201,7 @@ display: none;
 
 #tables-column{
   background-color: white !important;
-  height: 70vh;
+  height: 75vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,7 +276,11 @@ display: none;
   /*font-weight: bold;*/
   text-anchor: start;
   fill: black;
+}
 
+
+.oa-rect-text{
+  font-size: 0.6em;
 }
 
 #area-funder-table{
@@ -286,10 +290,23 @@ display: none;
   float: left
 }
 #network-graph{
-  width: 45vw;
   height: 50vh;
   padding: 1%;
+  margin: 1%;
+  width: 73%;
+  float: left;
 }
+#network-info{
+  width: 23%;
+  height: 50vh;
+  margin: 1%;
+  padding: 1%;
+  float: right;
+  overflow: scroll;
+}
+
+
+
 .link-line{
   stroke:rgb(35, 35, 35);
 }
@@ -298,6 +315,9 @@ display: none;
   background-color: aliceblue;
   width: 45vw;
   height: 20vh;
+}
+.link-list-item{
+  font-size: 0.8em;
 }
 
 

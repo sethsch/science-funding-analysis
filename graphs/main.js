@@ -6,6 +6,8 @@ var state = {
   data : [],
   fileredData : [],
   network: [],
+  neighborNodes : [],
+  communityNodes : [],
 }
 
 const mainDims = {
@@ -498,7 +500,7 @@ const bandwidth = 60;
     const minimalStyle = false;
     const useSymbolTick = true;
     const colorOption = true;
-    const jitter = 0.25;
+    const jitter = 0.1;
     var opacity = 0.7;
     const colors = d3.schemeCategory10
     const scale = d3.scalePow()
@@ -523,7 +525,7 @@ const bandwidth = 60;
       .showInnerDots(false)
       //.symbol(useSymbolTick == true ? d3.boxplotSymbolTick : d3.boxplotSymbolDot)
       .bandwidth(band.bandwidth())
-      .boxwidth(minimalStyle == true ? 6 : 45)
+      .boxwidth(minimalStyle == true ? 12 : 45)
       .vertical(vertical)
       .key(d => d)
 
@@ -745,8 +747,10 @@ citation_info.html(citation_infoText);
 
 ///// OPEN ACCESS
 
-let oa_plotHeight = 60;
 
+let oa_plotHeight = 360;
+var oa_plotWidth = $("#oa-stats").parent().width();
+let oa_margin = {top: 40, bottom: 40, right: 20, left: 120};
 
 let oa_svg = d3.select("#oa-stats")
 .append("svg")
@@ -754,13 +758,35 @@ let oa_svg = d3.select("#oa-stats")
 .attr("height",oa_plotHeight)
 .style("display", "block");
 
-var oa_plotWidth = $("#oa-stats").parent().width();
 
 
 //console.log(osf,"at oa sumary break")
 // TO DO: re-arrange based on keys rather htan index to make no-oa first or last...
 let oa = osf_ra["oa_summary"]
-//let oa = [osf_ra["oa_summary"][2],osf_ra["oa_summary"][0],osf_ra["oa_summary"][3],osf_ra["oa_summary"][1]]
+let oa_allOSF = osf["oa_summary"]
+let fullstat = [{oa_type: "NO_OA",value: 0}, {oa_type:"BOTH",value: 0},{oa_type:"PUBLISHER_HOSTED",value:0},{oa_type:"AUTHOR_HOSTED",value:0}]
+var funders = Object.keys(data)
+for (var i = 0; i < funders.length; i++){
+  if (!(subj_area in data[funders[i]]['Research Areas'])) {
+  }
+  else {
+    let oa_stat = data[funders[i]]['Research Areas'][subj_area]['oa_summary']
+    for (var j = 0; j < oa_stat.length; j++) {
+      if (oa_stat[j]['oa_type'] == "NO_OA") { 
+        fullstat[0].value += oa_stat[j].value
+      }
+      else if (oa_stat[j] == "BOTH") {
+        fullstat[1].value += oa_stat[j].value
+      }
+      else if (oa_stat[j] == "PUBLISHER_HOSTED") {
+        fullstat[2].value += oa_stat[j].value
+      }
+      else { fullstat[3].value += oa_stat[j].value}
+    }
+  }
+}
+let oa_datasets = [oa,fullstat,oa_allOSF]
+
 
 
 
@@ -774,50 +800,169 @@ function stack(data,name_col){
     endValue: (value += d.value) / total
   }));
 }
+let oa_stacks = []
 var order = ["NO_OA", "PUBLISHER_HOSTED", "AUTHOR_HOSTED", "BOTH"];
-let ordered_oa = _.sortBy(oa, function(obj){ 
-  return _.indexOf(order, obj.oa_type);
-});
-// reorder oa summary var into right order
-let oa_stack = stack(ordered_oa,"oa_type");
+for (let i = 0; i < oa_datasets.length; i++){
+  let ordered_oa = _.sortBy(oa_datasets[i],function(obj){
+    return _.indexOf(order,obj.oa_type)
+  })
+  oa_stacks.push(stack(ordered_oa,"oa_type"))
+  
+}
+console.log("oa stacks",oa_stacks)
+let bandCats = ["Funded by OSF","Other Funders","Other Research Areas (OSF)"]
+let series = [[],[],[],[]]
+for (let i = 0; i < oa_stacks.length; i++){
+  for (let j = 0; j < oa_stacks[i].length; j++){
+    let d = oa_stacks[i][j]
+    if (d.name === "NO_OA") {
+      series[0].push([d.startValue,d.endValue,bandCats[i],d.name,d.value])
+    }
+    else if (d.name === "PUBLISHER_HOSTED") {
+      series[1].push([d.startValue,d.endValue,bandCats[i],d.name,d.value])
+    }
+    else if (d.name === "AUTHOR_HOSTED") {
+      series[2].push([d.startValue,d.endValue,bandCats[i],d.name,d.value])
+    }
+    else if (d.name === "BOTH") {
+      series[3].push([d.startValue,d.endValue,bandCats[i],d.name,d.value])
+    }
+  }
+}
+console.log("series",series,order)
 
+let oa_xScale = d3.scaleLinear()
+  .range([oa_margin.left, oa_plotWidth - oa_margin.right])
 
-console.log("did we sort oa",ordered_oa,"stacked",oa_stack)
+let oa_yScale = d3.scaleBand()
+.domain(bandCats)
+.range([oa_margin.bottom, oa_plotHeight - oa_margin.top])
+.padding(0.5)
 
-let oa_xScale = d3.scaleLinear([0, 1], [margin.left, oa_plotWidth - margin.right])
 let oa_color = d3.scaleOrdinal()
-    .domain(oa_stack.map(d => d.name))
-    .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), oa_stack.length))
+.domain(order)
+.range(d3.schemeSpectral[4])
+.unknown("#ccc")
 
-let oa_formatPercent = oa_xScale.tickFormat(null, "%")
+let oa_xAxis = g => g
+    .attr("transform", `translate(0,${oa_margin.top + oa_yScale.bandwidth()})`)
+    .call(d3.axisTop(oa_xScale).ticks(oa_plotWidth / 100, "%"))
+    .call(g => g.selectAll(".domain").remove())
 
-var legend_svg = d3.select("#oa-legend").append("svg").attr("height",80).attr("width",400)
+let oa_yAxis = g => g
+.attr("transform", `translate(${oa_margin.left-10},-3)`)
+.call(d3.axisLeft(oa_yScale).tickSizeOuter(0).tickSize(0))
+.call(g => g.selectAll(".domain").remove())
+
+let formatValue = x => isNaN(x) ? "N/A" : x.toLocaleString("en")
+let oa_formatPercent = d3.format(".0%")
+
+
+oa_svg.append("g")
+.selectAll("g")
+.data(series)
+.enter().append("g")
+.selectAll("rect")
+.data(d => d)
+.join("rect")
+  .attr("fill", d => oa_color(d[3]))
+  .attr("x", d => oa_xScale(d[0]))
+  .attr("y", (d, i) => oa_yScale(d[2]))
+  .attr("width", d => oa_xScale(d[1]) - oa_xScale(d[0]))
+  .attr("height", oa_yScale.bandwidth())
+
+console.log(oa_svg.selectAll(".oa-rect"),oa_svg.selectAll(".oa-rect").data())
+
+oa_svg.append("g")
+  .selectAll("g")
+  .data(series)
+  .enter().append("g")
+  .selectAll("rect")
+  .data(d => d)
+  .join("text")
+  .attr("fill", d => d3.lab(oa_color(d[3])).l < 50 ? "white" : "black")
+  .attr("transform", d => `translate(${oa_xScale(d[0]) + 6}, ${oa_yScale(d[2])})`)
+  .call(text => text.append("tspan")
+    .attr("class","oa-rect-text")
+    .attr("x", 0)
+    .attr("y", oa_yScale.bandwidth()/2)
+    .attr("fill-opacity", 0.7)
+    .text(d => d[4] > 0 ? oa_formatPercent(d[4]): "")
+  )
+  .call(text => text.append("tspan")
+      .attr("font-weight", "bold")
+      .attr("y",  "1.9em")
+      .attr("x", "0")
+      //.text(d =>  d[4] > 0 ? d[3].replace("_HOSTED","").replace("NO_OA","PAYWALLED"): "")
+  )
+
+
+
+oa_svg.append("g")
+  .call(oa_xAxis);
+
+oa_svg.append("g")
+  .attr("class","oa-y-axis")
+  .call(oa_yAxis)
+
+oa_svg.select(".oa-y-axis").selectAll(".tick text")
+  .call(wrap,oa_margin.left)
+
+var legend_svg = d3.select("#oa-legend").append("svg")
+  .attr("height",50)
+  .attr("width","100%")
+  
+
   
 legend_svg
   .selectAll("rect")
-  .data(oa_stack)
+  .data(order)
   .join("rect")
   .attr("stroke","white")
-  .attr("fill", d => oa_color(d.name))
-  .attr("x", (d,i) => (i * 100))
+  .attr("fill", d => oa_color(d))
+  .attr("x", (d,i) => (oa_plotWidth*0.275)+(i * 100))
   .attr("y", 2)
   .attr("width",75)
   .attr("height",25)
 
 
   legend_svg.selectAll(".legend-labels")
-  .data(oa_stack)
+  .data(order)
   .join("text")
   .attr("class","legend-labels")
   .attr("font-family", "sans-serif")
   .attr("font-size", 10)
   .attr("fill","black")
-  .attr("x", (d,i) => (i * 100) + 2)
+  .attr("x", (d,i) => (oa_plotWidth*0.275)+(i * 100)+3)
   .attr("y", 40)
   .call(text => text.append("tspan")
     .attr("font-weight", "bold")
-    .text(d =>  d.name.replace("_HOSTED","").replace("NO_OA","PAYWALLED"))
+    .text(d =>  d.replace("_HOSTED","").replace("NO_OA","PAYWALLED"))
   )
+  
+
+
+/*
+//let ordered_oa = _.sortBy(oa, function(obj){ 
+//  return _.indexOf(order, obj.oa_type);
+//});
+// reorder oa summary var into right order
+//let oa_stack = stack(ordered_oa,"oa_type");
+
+
+//console.log("did we sort oa",ordered_oa,"stacked",oa_stack)
+
+let oa_xScale = d3.scaleLinear([0, 1], [margin.left, oa_plotWidth - margin.right])
+let oa_yScale = d3.scaleBand()
+  .domain([subj_area+" (OSF)",subj_area+" (Other Funders)", "All Research Areas (OSF)"])
+  .range([0,oa_plotHeight - margin.top])
+
+
+
+
+let oa_formatPercent = oa_xScale.tickFormat(null, "%")
+
+
 
 oa_svg.append("g")
   .attr("stroke", "white")
@@ -826,6 +971,7 @@ oa_svg.append("g")
   .join("rect")
   .attr("fill", d => oa_color(d.name))
   .attr("x", d => oa_xScale(d.startValue))
+  // replace with band
   .attr("y", 2)
   .attr("width", d => oa_xScale(d.endValue) - oa_xScale(d.startValue))
   .attr("height", oa_plotHeight * 0.75 )
@@ -855,33 +1001,33 @@ oa_svg.append("g")
     .attr("fill-opacity", 0.7)
     .text(d => oa_formatPercent(d.value)));
 
-  
+  */
    
 
-    function drag(simulation) {
-  
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-      }
-      
-      function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-      }
-      
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-      }
-      
-      return d3.drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended);
+  function drag(simulation) {
+
+    function dragstarted(event) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.subject.fx = event.subject.x;
+      event.subject.fy = event.subject.y;
     }
+    
+    function dragged(event) {
+      event.subject.fx = event.x;
+      event.subject.fy = event.y;
+    }
+    
+    function dragended(event) {
+      if (!event.active) simulation.alphaTarget(0);
+      event.subject.fx = null;
+      event.subject.fy = null;
+    }
+    
+    return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+  }
 
 
 
@@ -953,6 +1099,7 @@ oa_svg.append("g")
 
       //Toggle stores whether the highlighting is on
       var toggle = 0;
+     
       //Create an array logging what is connected to what
       var linkedByIndex = {};
       for (let i = 0; i < nodes.length; i++) {
@@ -986,9 +1133,34 @@ oa_svg.append("g")
               toggle = 0;
           }
       }
+      function mouseoverLinks(){
+        if (toggle == 0){
+          //Reduce the opacity of all but the neighbouring nodes
+          let d = d3.select(this).node().__data__;
+          console.log("this is what the d on click is in connected nodes",d)
+          //.node().__data__;
+          link.style("stroke-opacity", function (o) {
+              return d.index==o.source.index | d.index==o.target.index ? 1 : 0.6;
+          });
+          //Reduce the op
+        }   
+      }
+      function mouseoutLinks(){
+        if (toggle == 0){
+          //Put them back to opacity=1
+          d3.selectAll(".link-line")
+          .attr("stroke-opacity", 0.6)
+        }
+      }
+          
+      
       //and add one line to the node set up
 
-    const info_box = d3.select("#community-info")
+    var info_box = d3.select("#network-info").append("div")
+    var info_boxHeader = info_box.append("h6").attr("class","info-box-header")
+    var info_boxLinks = info_box.append("ul").attr("id","hovered-node-link-list")
+
+    
 
 
     const node = net_svg.append("g")
@@ -1003,7 +1175,9 @@ oa_svg.append("g")
         .attr("group",d=>d.group)
         .attr("fill", d=>colorScale(d.group))
         .call(drag(simulation))
-        .on('dblclick', connectedNodes); //Added code 
+        .on('dblclick', connectedNodes)
+        .on('mouseover',mouseoverLinks)
+        .on("mouseout",mouseoutLinks) //Added code 
     
         
     const texts = net_svg.selectAll("text.label")
@@ -1029,73 +1203,109 @@ oa_svg.append("g")
     
     // maintain a list of active links for hover behavior
     var link_dests = [];
+    var link_names = [];
     
     node.on("mouseenter",function(){
-      d3.select(this)
-        .transition()
-        .duration(500)
-        .attr("r",d=>circScale(d.value)*1.5)
+        link_names = []
+        d3.select(this)
+          .transition()
+          .duration(500)
+          .attr("r",d=>circScale(d.value)*1.5)
+      
+        var node_id = d3.select(this).attr("id")
+        var node_name = d3.select(this).attr("name")
+
+        info_boxHeader.text(node_name)
+
+        //console.log("node id",this)
+        d3.selectAll(".link-line")
+          .attr("stroke",function(e){
+            console.log("e",e)
+            if(String(e.source.index) === String(node_id) ||String(e.target.index) === String(node_id) ){
+              link_dests.push(String(e.source.index))
+              link_dests.push(String(e.target.index))
+
+              if (String(e.source.index) === String(node_id)){
+                link_names.push([e.target.id,e.value])
+              } 
+              else{link_names.push([e.source.id,e.value])}
+
+              return "black";
+            }
+            else{return "#999";}
+            //console.log("link console log",e.source,e.target)
+          })
+
+        //info_boxLinks.selectAll("li").remove()
+        d3.selectAll(".link-list-item").remove()
+
+        link_names = link_names.filter(d=> d[0]!= node_name && d[0] != "")
+        link_names = [...new Set(link_names)]
+
+        link_names.sort((a,b)=>b[1]-a[1])
     
-      var node_id = d3.select(this).attr("id")
-      var node_name = d3.select(this).attr("name")
-      //console.log("node id",this)
+       
     
-      d3.selectAll(".link-line")
-        .attr("stroke",function(e){
-          //console.log("e",e)
-          if(String(e.source.index) === String(node_id) ||String(e.target.index) === String(node_id) ){
-            link_dests.push(String(e.source.index))
-            link_dests.push(String(e.target.index))
+        info_boxLinks.selectAll(".link-list-item")
+        .data(link_names)
+        .enter()
+        .append("li")
+        .attr("class","link-list-item")
+        .attr("id",d=>d[0]+String(Math.random()*73831))
+        .text(d=>d[0]+" ("+d[1]+")")
+        .exit()
+        .remove()
     
-            return "black";
-          }
-          else{return "#999";}
-          //console.log("link console log",e.source,e.target)
-        })
+
+
+  
         //.attr("stroke","blue")
     
-      d3.selectAll(".label")
-        .transition()
-        //.duration(800)
-        //.delay()
-        .attr("font-size",function(e){
-          //console.log("the nodename on mouse enter",e.id)
-          //console.log(e,'linkdest',link_dests)
-          if(String(e.index) === String(node_id) ){
-            return "0.8em";
-          }
-          else if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
-            return "0.8em";
-          }
-          else{return "0px";}
-        })
-        .attr("transform",function(d){
-          //console.log(e,'linkdest',link_dests)
-          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-          }
-          else if (String(d.index) === String(node_id) ){
-            // let's keep the text in a constant position to make it UI friendly...
-            return "translate("+String(netWidth/2)+",15)"
-          }
+        /*d3.selectAll(".label")
+          .transition()
+          //.duration(800)
+          //.delay()
+          .attr("font-size",function(e){
+            //console.log("the nodename on mouse enter",e.id)
+            //console.log(e,'linkdest',link_dests)
+            if(String(e.index) === String(node_id) ){
+              return "0.8em";
+            }
+            else if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
+              return "0.8em";
+            }
+            else{return "0px";}
+          })
+          .attr("transform",function(d){
+            //console.log(e,'linkdest',link_dests)
+            if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+              return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
+            }
+            else if (String(d.index) === String(node_id) ){
+              // let's keep the text in a constant position to make it UI friendly...
+              return "translate("+String(netWidth/2)+",15)"
+            }
 
-            //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
+              //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
 
-            /* let's try an alternative, tracking to mouse
-            else {
-              //console.log(d3.pointer(event))
-              var x = d3.pointer(event)[0] //- document.getElementById("#network-svg").getBoundingClientRect().x + 10
-              var y = d3.pointer(event)[1] //- document.getElementById("#network-svg").getBoundingClientRect().y + 10
-              return "translate(" + String(x) + "," + String(y) + ")";
-            }*/
-          
-        }) 
-
-    })
+              //let's try an alternative, tracking to mouse
+              else {
+                //console.log(d3.pointer(event))
+                var x = d3.pointer(event)[0] //- document.getElementById("#network-svg").getBoundingClientRect().x + 10
+                var y = d3.pointer(event)[1] //- document.getElementById("#network-svg").getBoundingClientRect().y + 10
+                return "translate(" + String(x) + "," + String(y) + ")";
+              }
+            
+          }) */
+      })
     
     node.on("mouseout",function(){
       // clear active link list
-      link_dests = [];      
+      link_dests = [];    
+      
+ 
+
+
       d3.select(this)
         .transition()
         .duration(250)
