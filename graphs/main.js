@@ -1161,9 +1161,47 @@ oa_svg.append("g")
     var info_boxLinks = info_box.append("ul").attr("id","hovered-node-link-list")
 
     
+    var node = net_svg.selectAll('.node')
+      .data(nodes)
+      .enter().append("g")
+      .attr("class","node")
+      .call(drag(simulation))
+        .on('dblclick', connectedNodes)
+        .on('mouseover',mouseoverLinks)
+        .on("mouseout",mouseoutLinks)
+      
+     
+  
 
+    node
+      .append("circle")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1.5)
+        .attr("r", d=>circScale(d.value))
+        .attr("id",d=>d.index)
+        .attr("name",d=>d.id)
+        .attr("group",d=>d.group)
+        .attr("fill", d=>colorScale(d.group))
+        
+       
+       //Added code 
 
-    const node = net_svg.append("g")
+    node
+      .append("text")
+        .attr("class", "label")
+        .attr("id",d=>d.index)
+        .attr("group",d=>d.group)
+        .attr("fill", "black")
+        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
+        .attr("font-size",function(d){
+          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+            return "0.8em";
+          }
+          else {return "3px";}
+        })
+        .text(function(d) {  return d.id  });
+
+    /*const node = net_svg.append("g")
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
       .selectAll("circle")
@@ -1177,10 +1215,10 @@ oa_svg.append("g")
         .call(drag(simulation))
         .on('dblclick', connectedNodes)
         .on('mouseover',mouseoverLinks)
-        .on("mouseout",mouseoutLinks) //Added code 
+        .on("mouseout",mouseoutLinks) //Added code */
     
         
-    const texts = net_svg.selectAll("text.label")
+    /*const texts = net_svg.selectAll("text.label")
         // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
         .data(nodes)
         .enter().append("text")
@@ -1195,7 +1233,7 @@ oa_svg.append("g")
           }
           else {return "0px";}
         })
-        .text(function(d) {  return d.id  });
+        .text(function(d) {  return d.id  });*/
 
     
     //node.append("title")
@@ -1341,12 +1379,15 @@ oa_svg.append("g")
           .attr("y1", d => d.source.y)
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
+
+      node.attr("transform", function(d) { return "translate(" + Math.max(radius, Math.min(netWidth - radius, d.x)) + "," + Math.max(radius, Math.min(netHeight - radius, d.y)) + ")"; });
+
     
-      node
-        .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(netWidth - radius, d.x)); })
-        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(netHeight - radius, d.y)); });
+      //node
+      //  .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(netWidth - radius, d.x)); })
+      //  .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(netHeight - radius, d.y)); });
     
-      texts
+      /*texts
       .attr("transform", function(d) {
           if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
             return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
@@ -1355,7 +1396,7 @@ oa_svg.append("g")
             //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
             return "translate("+netWidth/2+",15)"
           };
-      });
+      });*/
     });
     
  
