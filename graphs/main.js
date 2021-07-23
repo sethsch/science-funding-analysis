@@ -1044,6 +1044,7 @@ oa_svg.append("g")
     }
     //var nodes = []
     var nodes = osf_ra['nodes']
+    //var links = osf_ra['links']
     /*var node_vals = []
     for (let i = 0; i < osf_ra['nodes'].length; i++){
       let val = osf_ra['top_cofunders'].filter(d=>d.funder === osf_ra['nodes'][i])
@@ -1062,6 +1063,7 @@ oa_svg.append("g")
 
     
 
+    /// insert my own netgraph here
 
     const circScale = d3.scaleSqrt()
     .domain([1, d3.max(nodes,d=>d.value)])
@@ -1165,6 +1167,8 @@ oa_svg.append("g")
       .data(nodes)
       .enter().append("g")
       .attr("class","node")
+      .attr("id",d=>"node-"+String(d.index))
+      .attr("name",d=>d.id)
       .call(drag(simulation))
         .on('dblclick', connectedNodes)
         .on('mouseover',mouseoverLinks)
@@ -1173,71 +1177,47 @@ oa_svg.append("g")
      
   
 
-    node
+    var node_circle = node
       .append("circle")
         .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
+        .attr("stroke-width", 1.25)
         .attr("r", d=>circScale(d.value))
-        .attr("id",d=>d.index)
+        .attr("class","node-circle")
+        .attr("id",d=>"node-circle-"+String(d.index))
         .attr("name",d=>d.id)
         .attr("group",d=>d.group)
         .attr("fill", d=>colorScale(d.group))
+        
         
        
        //Added code 
 
-    node
+    var five_top_funders = top_cofunders.slice(0,5).map(d=>d.funder)
+
+    var node_label = node
       .append("text")
-        .attr("class", "label")
-        .attr("id",d=>d.index)
+        .attr("class", "node-label")
+        .attr("id",d=>"node-label-"+String(d.index))
         .attr("group",d=>d.group)
         .attr("fill", "black")
+        .attr("text-anchor","middle")
         // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
         .attr("font-size",function(d){
           if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "0.8em";
+            let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+            return labelstring.length > 13 ? "0.6em" : "0.85em";
           }
-          else {return "3px";}
+          else if (five_top_funders.includes(d.id)) {return "0.6em";}
+          else {return "0em";}
         })
-        .text(function(d) {  return d.id  });
-
-    /*const node = net_svg.append("g")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
-      .selectAll("circle")
-      .data(nodes)
-      .join("circle")
-        .attr("r", d=>circScale(d.value))
-        .attr("id",d=>d.index)
-        .attr("name",d=>d.id)
-        .attr("group",d=>d.group)
-        .attr("fill", d=>colorScale(d.group))
-        .call(drag(simulation))
-        .on('dblclick', connectedNodes)
-        .on('mouseover',mouseoverLinks)
-        .on("mouseout",mouseoutLinks) //Added code */
-    
-        
-    /*const texts = net_svg.selectAll("text.label")
-        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
-        .data(nodes)
-        .enter().append("text")
-        .attr("class", "label")
-        .attr("id",d=>d.index)
-        .attr("group",d=>d.group)
-        .attr("fill", "black")
-        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
-        .attr("font-size",function(d){
-          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "0.8em";
-          }
-          else {return "0px";}
+        .text(function(d) {  
+          let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+          let regExp = /\(([^)]+)\)/
+          var matches = regExp.exec(labelstring)
+          labelstring = matches ? matches[0].replace("(","").replace(")","") : labelstring;
+          return labelstring;
         })
-        .text(function(d) {  return d.id  });*/
 
-    
-    //node.append("title")
-    //    .text(d => d.id);
     
     // maintain a list of active links for hover behavior
     var link_dests = [];
@@ -1245,25 +1225,41 @@ oa_svg.append("g")
     
     node.on("mouseenter",function(){
         link_names = []
-        d3.select(this)
-          .transition()
-          .duration(500)
-          .attr("r",d=>circScale(d.value)*1.5)
-      
+        console.log('enter this',this)
         var node_id = d3.select(this).attr("id")
         var node_name = d3.select(this).attr("name")
 
+
+        d3.select(this).select(".node-label")
+          .transition()
+          .delay(300)
+          .attr("font-size",function(d){
+            if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+              let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+              return labelstring.length > 13 ? "0.6em" : "0.85em";
+            }
+            else if (five_top_funders.includes(d.id)) {return "0.6em";}
+            else {return "0.5em";}
+          })
+
+        d3.select(this).select(".node-circle")
+          .transition()
+          .duration(300)
+          .attr("r",d=>circScale(d.value)*1.5)
+      
+     
         info_boxHeader.text(node_name)
 
         //console.log("node id",this)
         d3.selectAll(".link-line")
           .attr("stroke",function(e){
-            console.log("e",e)
-            if(String(e.source.index) === String(node_id) ||String(e.target.index) === String(node_id) ){
+            let id = String(node_id).replace("node-","")
+            //console.log("e",e)
+            if(String(e.source.index) === id ||String(e.target.index) === id ){
               link_dests.push(String(e.source.index))
               link_dests.push(String(e.target.index))
 
-              if (String(e.source.index) === String(node_id)){
+              if (String(e.source.index) === id){
                 link_names.push([e.target.id,e.value])
               } 
               else{link_names.push([e.source.id,e.value])}
@@ -1283,7 +1279,6 @@ oa_svg.append("g")
         link_names.sort((a,b)=>b[1]-a[1])
     
        
-    
         info_boxLinks.selectAll(".link-list-item")
         .data(link_names)
         .enter()
@@ -1294,82 +1289,38 @@ oa_svg.append("g")
         .exit()
         .remove()
     
-
-
   
         //.attr("stroke","blue")
     
-        /*d3.selectAll(".label")
-          .transition()
-          //.duration(800)
-          //.delay()
-          .attr("font-size",function(e){
-            //console.log("the nodename on mouse enter",e.id)
-            //console.log(e,'linkdest',link_dests)
-            if(String(e.index) === String(node_id) ){
-              return "0.8em";
-            }
-            else if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
-              return "0.8em";
-            }
-            else{return "0px";}
-          })
-          .attr("transform",function(d){
-            //console.log(e,'linkdest',link_dests)
-            if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-              return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-            }
-            else if (String(d.index) === String(node_id) ){
-              // let's keep the text in a constant position to make it UI friendly...
-              return "translate("+String(netWidth/2)+",15)"
-            }
-
-              //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-
-              //let's try an alternative, tracking to mouse
-              else {
-                //console.log(d3.pointer(event))
-                var x = d3.pointer(event)[0] //- document.getElementById("#network-svg").getBoundingClientRect().x + 10
-                var y = d3.pointer(event)[1] //- document.getElementById("#network-svg").getBoundingClientRect().y + 10
-                return "translate(" + String(x) + "," + String(y) + ")";
-              }
-            
-          }) */
-      })
+    })
     
     node.on("mouseout",function(){
       // clear active link list
       link_dests = [];    
       
- 
+      var node_id = d3.select(this).attr("id")
 
 
-      d3.select(this)
+      d3.select(this).select(".node-label")
+      .transition()
+      .delay(500)
+      .attr("font-size",function(d){
+        if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
+          let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+          return labelstring.length > 13 ? "0.6em" : "0.85em";
+        }
+        else if (five_top_funders.includes(d.id)) {return "0.6em";}
+        else {return "0em";}
+      })
+
+
+      d3.select(this).select(".node-circle")
         .transition()
-        .duration(250)
+        .delay(750)
         .attr("r",d=>circScale(d.value))
     
       d3.selectAll(".link-line")
         .attr("stroke","#999")
-    
-      d3.selectAll(".label")
-        .attr("font-size",function(e){
-          //console.log(e,'linkdest',link_dests)
-          if (String(e.id).includes("Open Society") || String(e.id).includes("Soros")){
-            return "0.8em";
-          }
-          else{return "0px";}
-        }) 
-        .attr("transform",function(d){
-          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-          }
-          else {
-            // let's keep the text in a constant position to make it UI friendly...
-            return "translate("+String(netWidth/2)+",15)"
-          }
-
-        })
     
     })
     
@@ -1382,26 +1333,10 @@ oa_svg.append("g")
 
       node.attr("transform", function(d) { return "translate(" + Math.max(radius, Math.min(netWidth - radius, d.x)) + "," + Math.max(radius, Math.min(netHeight - radius, d.y)) + ")"; });
 
-    
-      //node
-      //  .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(netWidth - radius, d.x)); })
-      //  .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(netHeight - radius, d.y)); });
-    
-      /*texts
-      .attr("transform", function(d) {
-          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-          }
-          else  {
-            //return "translate(" + (d.x - 5) + "," + (d.y - 5) + ")";
-            return "translate("+netWidth/2+",15)"
-          };
-      });*/
     });
     
- 
-
 })
+
 
 
 
