@@ -24,7 +24,7 @@ paddingInner = 0.2,
 margin = { top: 20, bottom: 40, left: 75, right: 40 };
 
 const netWidth = window.innerWidth * 0.4,
-  netHeight = window.innerHeight * 0.5;
+  netHeight = window.innerHeight * 0.75;
 
 const panelDims = {
   width: width,
@@ -930,7 +930,7 @@ legend_svg
   .data(order)
   .join("text")
   .attr("class","legend-labels")
-  .attr("font-family", "sans-serif")
+  .attr("font-family", "Lato")
   .attr("font-size", 10)
   .attr("fill","black")
   .attr("x", (d,i) => (oa_plotWidth*0.275)+(i * 100)+3)
@@ -1002,223 +1002,158 @@ oa_svg.append("g")
     .text(d => oa_formatPercent(d.value)));
 
   */
-   
-
-  function drag(simulation) {
-
-    function dragstarted(event) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-    
-    function dragged(event) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-    
-    function dragended(event) {
-      if (!event.active) simulation.alphaTarget(0);
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-    
-    return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
-  }
-
-
-
-    
-    state.network = graph;
-    //console.log("global state",state);
-    
-    
-
-
-
-    function getRandomInt(max) {
-      return Math.floor(Math.random() * max);
-    }
-    //var nodes = []
-    var nodes = osf_ra['nodes']
-    //var links = osf_ra['links']
-    /*var node_vals = []
-    for (let i = 0; i < osf_ra['nodes'].length; i++){
-      let val = osf_ra['top_cofunders'].filter(d=>d.funder === osf_ra['nodes'][i])
-      
-      let a = {"id":osf_ra['nodes'][i], "group": getRandomInt(8), "value": val[0].value}
-      nodes.push(a)
-      
-    }*/
-    //console.log("console logging...","node vals",nodes)
-    
-    nodes = nodes.map(d => Object.create(d));
-    const links = osf_ra['links'].map(d=>Object.create(d))
-
-
   
 
+
     
+})
+////////////////////
 
-    /// insert my own netgraph here
 
+
+//var netwidth = 800;
+//var netheight = 600;
+
+var element = d3.select('#network-graph').node();
+var netwidth = element.getBoundingClientRect().width * 0.95;
+var netheight = element.getBoundingClientRect().height * 0.95;
+
+var netcolor = d3.scaleOrdinal(d3.schemeCategory10);
+
+d3.json("funderSubjStats.json").then(function(graph) {
+
+    const osf = graph['osf']
+    const osf_ra = graph['osf']['Research Areas']["Government & Law"]
+    var nodes = osf_ra['nodes']
+    var links = osf_ra['links']
+
+    let top_cofunders = osf_ra['top_cofunders']
+    var five_top_funders = top_cofunders.slice(0,5).map(d=>d.funder)
+
+
+    var label = {
+        'nodes': [],
+        'links': []
+    };
+
+    nodes.forEach(function(d, i) {
+        label.nodes.push({node: d});
+        label.nodes.push({node: d});
+        label.links.push({
+            source: i * 2,
+            target: i * 2 + 1
+        });
+    });
+
+    var labelLayout = d3.forceSimulation(label.nodes)
+        .force("charge", d3.forceManyBody().strength(-50))
+        .force("link", d3.forceLink(label.links).distance(0).strength(2));
+
+    var graphLayout = d3.forceSimulation(nodes)
+        .force("charge", d3.forceManyBody().strength(-3000))
+        .force("center", d3.forceCenter(netwidth / 2, netheight / 2))
+        .force("x", d3.forceX(netwidth / 2).strength(1))
+        .force("y", d3.forceY(netheight / 2).strength(1))
+        .force("link", d3.forceLink(links).id(function(d) {return d.id; }).distance(50).strength(1))
+        .on("tick", ticked);
+
+    var adjlist = [];
+
+    links.forEach(function(d) {
+        adjlist[d.source.index + "-" + d.target.index] = true;
+        adjlist[d.target.index + "-" + d.source.index] = true;
+    });
+
+    function neigh(a, b) {
+        return a == b || adjlist[a + "-" + b];
+    }
     const circScale = d3.scaleSqrt()
     .domain([1, d3.max(nodes,d=>d.value)])
-    .range([6, 20]);
+    .range([5, 20]);
 
     const linkScale = d3.scaleSqrt()
     .domain([1, d3.max(links,d=>d.value)])
     .range([0.25, 4]);
 
-    //const links = state.network.links.map(d => Object.create(d));
-    //const nodes = state.network.nodes.map(d => Object.create(d));
-    const radius = 5;
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(-90))
-        .force("center", d3.forceCenter(netWidth / 2, netHeight / 2))
-
-  
-    
-    const net_svg = d3.select("#network-graph").append("svg")
-        .attr("width",netWidth)
-        .attr("height",netHeight)
-        .attr("id","network-svg")
-    
-    const link = net_svg.append("g")
-      .selectAll("line")
-      .data(links)
-      .join("line")
-        .attr("stroke-width", d => linkScale(d.value))
-        .attr("class","link-line")
-        .attr("stroke-opacity", 0.6)
-        .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
-    
-
-
-      //Toggle stores whether the highlighting is on
-      var toggle = 0;
-     
-      //Create an array logging what is connected to what
-      var linkedByIndex = {};
-      for (let i = 0; i < nodes.length; i++) {
-          linkedByIndex[i + "," + i] = 1;
-      };
-      links.forEach(function (d) {
-          linkedByIndex[d.source.index + "," + d.target.index] = 1;
-      });
-      //This function looks up whether a pair are neighbours
-      function neighboring(a, b) {
-          return linkedByIndex[a.index + "," + b.index];
-      }
-      function connectedNodes() {
-          if (toggle == 0) {
-              //Reduce the opacity of all but the neighbouring nodes
-              let d = d3.select(this).node().__data__;
-              console.log("this is what the d on click is in connected nodes",d)
-              //.node().__data__;
-              node.style("opacity", function (o) {
-                  return neighboring(d, o) | neighboring(o, d) ? 1 : 0.1;
-              });
-              link.style("opacity", function (o) {
-                  return d.index==o.source.index | d.index==o.target.index ? 1 : 0.1;
-              });
-              //Reduce the op
-              toggle = 1;
-          } else {
-              //Put them back to opacity=1
-              node.style("opacity", 1);
-              link.style("opacity", 1);
-              toggle = 0;
-          }
-      }
-      function mouseoverLinks(){
-        if (toggle == 0){
-          //Reduce the opacity of all but the neighbouring nodes
-          let d = d3.select(this).node().__data__;
-          console.log("this is what the d on click is in connected nodes",d)
-          //.node().__data__;
-          link.style("stroke-opacity", function (o) {
-              return d.index==o.source.index | d.index==o.target.index ? 1 : 0.6;
-          });
-          //Reduce the op
-        }   
-      }
-      function mouseoutLinks(){
-        if (toggle == 0){
-          //Put them back to opacity=1
-          d3.selectAll(".link-line")
-          .attr("stroke-opacity", 0.6)
-        }
-      }
-          
-      
-      //and add one line to the node set up
-
     var info_box = d3.select("#network-info").append("div")
     var info_boxHeader = info_box.append("h6").attr("class","info-box-header")
     var info_boxLinks = info_box.append("ul").attr("id","hovered-node-link-list")
 
-    
-    var node = net_svg.selectAll('.node')
-      .data(nodes)
-      .enter().append("g")
-      .attr("class","node")
-      .attr("id",d=>"node-"+String(d.index))
-      .attr("name",d=>d.id)
-      .call(drag(simulation))
-        .on('dblclick', connectedNodes)
-        .on('mouseover',mouseoverLinks)
-        .on("mouseout",mouseoutLinks)
-      
-     
+    var svg = d3.select("#zoom-netgraph").attr("width", netwidth).attr("height", netheight);
+    var container = svg.append("g");
+
+    svg.call(
+      d3.zoom()
+            .scaleExtent([.1, 4])
+            .on("zoom", function() { container.attr("transform", d3.event.transform); })
+    );
+
+    var link = container.append("g").attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .enter()
+        .append("line")
+        .attr("stroke", "#aaa")
+        .attr("class","link-line")
+        .attr("id",d=>"link_"+d.source.index+"_"+d.target.index)
+        .attr("stroke-width", d=>linkScale(d.value));
+
+    var node = container.append("g").attr("class", "nodes")
+        .selectAll("g")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("id",d=>"node-"+String(d.index))
+        .attr("name",d=>d.id)
+        .attr("r", d=>circScale(d.value))
+        .attr("fill", function(d) { return netcolor(d.group); })
+
+    node.on("mouseover", focus).on("mouseout", unfocus);
+
+    node.call(
+      d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+    );
+    console.log("label nodes",five_top_funders)
+
   
 
-    var node_circle = node
-      .append("circle")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.25)
-        .attr("r", d=>circScale(d.value))
-        .attr("class","node-circle")
-        .attr("id",d=>"node-circle-"+String(d.index))
-        .attr("name",d=>d.id)
-        .attr("group",d=>d.group)
-        .attr("fill", d=>colorScale(d.group))
-        
-        
-       
-       //Added code 
-
-    var five_top_funders = top_cofunders.slice(0,5).map(d=>d.funder)
-
-    var node_label = node
-      .append("text")
+    var labelNode = container.append("g").attr("class", "labelNodes")
+        .selectAll("text")
+        .data(label.nodes)
+        .enter()
+        .append("text")
         .attr("class", "node-label")
         .attr("id",d=>"node-label-"+String(d.index))
-        .attr("group",d=>d.group)
-        .attr("fill", "black")
-        .attr("text-anchor","middle")
-        // TO DO: edit to ensure the labels for the largest nodes and the main targets are present
+        .attr("fill", "#555")
+        .attr("font-family", "Lato")
+        .text(function(d,i) {  
+            if (i%2 == 0) {
+                return "";
+            }
+            else {
+                let labelstring =  String(d.node.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+                let regExp = /\(([^)]+)\)/
+                var matches = regExp.exec(labelstring)
+                labelstring = matches ? matches[0].replace("(","").replace(")","") : labelstring;
+                return labelstring;
+            }
+        })
         .attr("font-size",function(d){
-          if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-            let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
+          if (String(d.node.id).includes("Open Society") || String(d.node.id).includes("Soros")){
+            let labelstring =  String(d.node.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
             return labelstring.length > 13 ? "0.6em" : "0.85em";
           }
-          else if (five_top_funders.includes(d.id)) {return "0.6em";}
-          else {return "0em";}
+          else if (five_top_funders.includes(d.node.id)) {return "0.6em";}
+          else {return "0.45em";}
         })
-        .text(function(d) {  
-          let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
-          let regExp = /\(([^)]+)\)/
-          var matches = regExp.exec(labelstring)
-          labelstring = matches ? matches[0].replace("(","").replace(")","") : labelstring;
-          return labelstring;
-        })
+        .style("pointer-events", "none"); // to prevent mouseover/drag capture
 
-    
+    node.on("mouseover", focus).on("mouseout", unfocus);
+
+
     // maintain a list of active links for hover behavior
     var link_dests = [];
     var link_names = [];
@@ -1229,7 +1164,7 @@ oa_svg.append("g")
         var node_id = d3.select(this).attr("id")
         var node_name = d3.select(this).attr("name")
 
-
+            
         d3.select(this).select(".node-label")
           .transition()
           .delay(300)
@@ -1239,20 +1174,20 @@ oa_svg.append("g")
               return labelstring.length > 13 ? "0.6em" : "0.85em";
             }
             else if (five_top_funders.includes(d.id)) {return "0.6em";}
-            else {return "0.5em";}
+            else {return "0.45em";}
           })
 
-        d3.select(this).select(".node-circle")
+        /*d3.select(this).select(".node-circle")
           .transition()
           .duration(300)
-          .attr("r",d=>circScale(d.value)*1.5)
+          .attr("r",d=>circScale(d.value)*1.5)*/
       
      
-        info_boxHeader.text(node_name)
+        
 
         //console.log("node id",this)
         d3.selectAll(".link-line")
-          .attr("stroke",function(e){
+          .attr("opacity",function(e){
             let id = String(node_id).replace("node-","")
             //console.log("e",e)
             if(String(e.source.index) === id ||String(e.target.index) === id ){
@@ -1264,12 +1199,14 @@ oa_svg.append("g")
               } 
               else{link_names.push([e.source.id,e.value])}
 
-              return "black";
+              //return "black";
+              return 1
             }
-            else{return "#999";}
+            else{return 1;}
             //console.log("link console log",e.source,e.target)
           })
 
+        info_boxHeader.text(node_name)
         //info_boxLinks.selectAll("li").remove()
         d3.selectAll(".link-list-item").remove()
 
@@ -1294,50 +1231,97 @@ oa_svg.append("g")
     
     })
     
-    node.on("mouseout",function(){
-      // clear active link list
-      link_dests = [];    
       
-      var node_id = d3.select(this).attr("id")
 
 
-      d3.select(this).select(".node-label")
-      .transition()
-      .delay(500)
-      .attr("font-size",function(d){
-        if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
-          let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
-          return labelstring.length > 13 ? "0.6em" : "0.85em";
-        }
-        else if (five_top_funders.includes(d.id)) {return "0.6em";}
-        else {return "0em";}
-      })
 
 
-      d3.select(this).select(".node-circle")
-        .transition()
-        .delay(750)
-        .attr("r",d=>circScale(d.value))
-    
-      d3.selectAll(".link-line")
-        .attr("stroke","#999")
-    
-    })
-    
-    simulation.on("tick", () => {
-      link
-          .attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
-
-      node.attr("transform", function(d) { return "translate(" + Math.max(radius, Math.min(netWidth - radius, d.x)) + "," + Math.max(radius, Math.min(netHeight - radius, d.y)) + ")"; });
-
-    });
-    
-})
 
 
+    function ticked() {
+
+        node.call(updateNode);
+        link.call(updateLink);
+
+        labelLayout.alphaTarget(0.3).restart();
+        labelNode.each(function(d, i) {
+            if(i % 2 == 0) {
+                d.x = d.node.x;
+                d.y = d.node.y;
+            } else {
+                var b = this.getBBox();
+
+                var diffX = d.x - d.node.x;
+                var diffY = d.y - d.node.y;
+
+                var dist = Math.sqrt(diffX * diffX + diffY * diffY);
+
+                var shiftX = b.width * (diffX - dist) / (dist * 2);
+                shiftX = Math.max(-b.width, Math.min(0, shiftX));
+                var shiftY = 16;
+                this.setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
+            }
+        });
+        labelNode.call(updateNode);
+
+    }
+
+    function fixna(x) {
+        if (isFinite(x)) return x;
+        return 0;
+    }
+
+    function focus(d) {
+        var index = d3.select(d3.event.target).datum().index;
+        node.style("opacity", function(o) {
+            return neigh(index, o.index) ? 1 : 0.1;
+        });
+        labelNode.attr("display", function(o) {
+        return neigh(index, o.node.index) ? "block": "none";
+        });
+        link.style("opacity", function(o) {
+            return o.source.index == index || o.target.index == index ? 1 : 0.1;
+        });
+    }
+
+    function unfocus() {
+    labelNode.attr("display", "block");
+    node.style("opacity", 1);
+    link.style("opacity", 1);
+    }
+
+    function updateLink(link) {
+        link.attr("x1", function(d) { return fixna(d.source.x); })
+            .attr("y1", function(d) { return fixna(d.source.y); })
+            .attr("x2", function(d) { return fixna(d.target.x); })
+            .attr("y2", function(d) { return fixna(d.target.y); });
+    }
+
+    function updateNode(node) {
+        node.attr("transform", function(d) {
+            return "translate(" + fixna(d.x) + "," + fixna(d.y) + ")";
+        });
+    }
+
+    function dragstarted(d) {
+      d3.event.sourceEvent.stopPropagation();
+        if (!d3.event.active) graphLayout.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+        if (!d3.event.active) graphLayout.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+}); 
 
 
 
