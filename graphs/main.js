@@ -1332,8 +1332,10 @@ d3.json("funderSubjStats.json").then(function(graph) {
         if (!d3.event.active) graphLayout.alphaTarget(0);
         //d.fx = null;
         //d.fy = null;
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
+        //d.fx = d3.event.x;
+        //d.fy = d3.event.y;
+        d.fx = d.x;
+        d.fy = d.y;
     }
     
 
