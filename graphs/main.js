@@ -210,13 +210,17 @@ d3.json("funderSubjStats.json",d3.autoType).then( data => {
 
   let iconColor = "#242424"
   let filledColor = "#65c268"
-  let iconSize = 38
+
+  
+  let pubPlotWidth =  $("#pubs-img-graph").width() * 0.8;
+
+  let iconSize = pubPlotWidth/20
+  let pubPlotHeight = iconSize*7
   //'rgb(173, 212, 174)'
   let base_pub_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill=${iconColor} class="bi bi-file-text" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>`
   let fill_pub_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" fill=${iconColor} class="bi bi-file-text" viewBox="0 0 16 16"><rect x="2" y="1" width="12" height="14" style="fill: ${filledColor};"></rect><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/></svg>`
   
-  let pubPlotHeight = iconSize*7
-  let pubPlotWidth = 800
+
   var pub_svg = d3.select("#pubs-img-graph").append("svg").attr("width",pubPlotWidth).attr("height",pubPlotHeight)
     
   let pub_list = [...Array(100).keys()]
@@ -1013,10 +1017,16 @@ oa_svg.append("g")
 
 //var netwidth = 800;
 //var netheight = 600;
+var info_box = d3.select("#network-info").append("div")
+var info_boxHeader = info_box.append("h6").attr("class","info-box-header")
+var info_boxLinks = info_box.append("ul").attr("id","hovered-node-link-list")
+
 
 var element = d3.select('#network-graph').node();
-var netwidth = element.getBoundingClientRect().width * 0.95;
-var netheight = element.getBoundingClientRect().height * 0.95;
+var netwidth = element.getBoundingClientRect().width * 0.96;
+
+
+var netheight = d3.select('#network-info').node().getBoundingClientRect().height * 0.96;
 
 var netcolor = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -1047,7 +1057,7 @@ d3.json("funderSubjStats.json").then(function(graph) {
 
     var labelLayout = d3.forceSimulation(label.nodes)
         .force("charge", d3.forceManyBody().strength(-50))
-        .force("link", d3.forceLink(label.links).distance(0).strength(2));
+        .force("link", d3.forceLink(label.links).distance(0).strength(1));
 
     var graphLayout = d3.forceSimulation(nodes)
         .force("charge", d3.forceManyBody().strength(-3000))
@@ -1056,6 +1066,10 @@ d3.json("funderSubjStats.json").then(function(graph) {
         .force("y", d3.forceY(netheight / 2).strength(1))
         .force("link", d3.forceLink(links).id(function(d) {return d.id; }).distance(50).strength(1))
         .on("tick", ticked);
+
+  
+
+
 
     var adjlist = [];
 
@@ -1075,16 +1089,13 @@ d3.json("funderSubjStats.json").then(function(graph) {
     .domain([1, d3.max(links,d=>d.value)])
     .range([0.25, 4]);
 
-    var info_box = d3.select("#network-info").append("div")
-    var info_boxHeader = info_box.append("h6").attr("class","info-box-header")
-    var info_boxLinks = info_box.append("ul").attr("id","hovered-node-link-list")
-
+   
     var svg = d3.select("#zoom-netgraph").attr("width", netwidth).attr("height", netheight);
     var container = svg.append("g");
 
     svg.call(
       d3.zoom()
-            .scaleExtent([.1, 4])
+            .scaleExtent([.1, 5])
             .on("zoom", function() { container.attr("transform", d3.event.transform); })
     );
 
@@ -1107,11 +1118,13 @@ d3.json("funderSubjStats.json").then(function(graph) {
         .attr("name",d=>d.id)
         .attr("r", d=>circScale(d.value))
         .attr("fill", function(d) { return netcolor(d.group); })
-
+        
     node.on("mouseover", focus).on("mouseout", unfocus);
+  
 
     node.call(
       d3.drag()
+            //.on("start",dragstarted)
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended)
@@ -1144,10 +1157,10 @@ d3.json("funderSubjStats.json").then(function(graph) {
         .attr("font-size",function(d){
           if (String(d.node.id).includes("Open Society") || String(d.node.id).includes("Soros")){
             let labelstring =  String(d.node.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
-            return labelstring.length > 13 ? "0.6em" : "0.85em";
+            return labelstring.length > 13 ? "0.8em" : "1em";
           }
-          else if (five_top_funders.includes(d.node.id)) {return "0.6em";}
-          else {return "0.45em";}
+          else if (five_top_funders.includes(d.node.id)) {return "0.8em";}
+          else {return "0.6em";}
         })
         .style("pointer-events", "none"); // to prevent mouseover/drag capture
 
@@ -1171,10 +1184,10 @@ d3.json("funderSubjStats.json").then(function(graph) {
           .attr("font-size",function(d){
             if (String(d.id).includes("Open Society") || String(d.id).includes("Soros")){
               let labelstring =  String(d.id).replace("Foundations","").replace("Foundation","").replace("University of","Univ.").replace("University","Univ.").replace("College","")  
-              return labelstring.length > 13 ? "0.6em" : "0.85em";
+              return labelstring.length > 13 ? "0.8em" : "1em";
             }
-            else if (five_top_funders.includes(d.id)) {return "0.6em";}
-            else {return "0.45em";}
+            else if (five_top_funders.includes(d.id)) {return "0.8em";}
+            else {return "0.6em";}
           })
 
         /*d3.select(this).select(".node-circle")
@@ -1305,7 +1318,7 @@ d3.json("funderSubjStats.json").then(function(graph) {
 
     function dragstarted(d) {
       d3.event.sourceEvent.stopPropagation();
-        if (!d3.event.active) graphLayout.alphaTarget(0.3).restart();
+        if (!d3.event.active) graphLayout.alphaTarget(0.1).restart();
         d.fx = d.x;
         d.fy = d.y;
     }
@@ -1317,9 +1330,16 @@ d3.json("funderSubjStats.json").then(function(graph) {
 
     function dragended(d) {
         if (!d3.event.active) graphLayout.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        //d.fx = null;
+        //d.fy = null;
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
     }
+    
+
+    
+  
+    
 
 }); 
 

@@ -1,9 +1,4 @@
-html, body {
-  height: 180vh;
-  width: 100vw;
-  font-family: 'Lato', sans-serif;
 
-}
 
 h1 { 
   /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; */
@@ -193,7 +188,7 @@ display: none;
 }
 
 #pubs-img-graph{
-  display: table-cell;
+  /*display: table-cell;*/
 }
 .pubs-text{
   text-shadow: 0.1rem 0.1rem 0.3rem darkslategrey;
@@ -223,13 +218,6 @@ display: none;
   justify-content: center;
 }
 
-.table-striped{
-  
-  height: 100%;
-  margin: 3%;
-  float: left;
-  font-size: 0.85em;
-}
 
 .rank-col{
   font-weight: bold;
@@ -305,20 +293,19 @@ display: none;
   overflow-y: scroll;
   float: left
 }
-#network-graph{
-  height: 75vh;
-  padding: 1%;
-  margin: 1%;
-  width: 73%;
-  float: left;
-}
+
+
+
 #network-info{
-  width: 23%;
-  height: 75vh;
-  margin: 1%;
-  padding: 1%;
-  float: right;
+  float: left;
+  padding: 2%;
+  height: 70vh;
+
   overflow: scroll;
+}
+#network-graph{
+  width: 100%;
+  float: right;
 }
 #boxplot{
   font-family: 'Lato',sans-serif;
@@ -338,7 +325,12 @@ display: none;
   font-size: 0.8em;
 }
 
-
+#nav-tab{
+  width: 50%;
+}
+.tab-pane{
+  width: 50%;
+}
 
 
 #funder-table {
